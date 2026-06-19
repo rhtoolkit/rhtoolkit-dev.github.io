@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sentry Replay Verification | RH Toolkit</title>
+    <style>
+        :root {
+            --color-bg-main: #141414; /* Deep minimalist grey/black */
+            --color-text-main: #e2e2e2;
+            --color-text-faded: #888888;
+            --color-border: #2e2e2e;
+            --color-accent: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--color-bg-main);
+            color: var(--color-text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            min-height: 100vh;
+            display: flex;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .main-content {
+            flex: 1;
+            min-height: 100vh;
+            padding: 80px 40px;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--color-accent);
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: var(--color-text-faded);
+            margin-bottom: 60px;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-accent);
+            margin-top: 60px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 8px;
+        }
+
+        p {
+            color: #cccccc;
+            margin-bottom: 24px;
+        }
+
+        ul {
+            margin-bottom: 24px;
+            padding-left: 20px;
+            color: #cccccc;
+        }
+
+        li {
+            margin-bottom: 12px;
+        }
+
+        strong {
+            color: #e2e2e2;
+        }
+
+        code {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            background-color: #1f1f1f;
+            color: #eeeeee;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border);
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .minimal-tldr {
+            border-left: 2px solid var(--color-text-faded);
+            padding-left: 24px;
+            margin-top: 40px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+
+        .minimal-tldr p {
+            margin-bottom: 0;
+            color: #e2e2e2;
+        }
+
+        /* ========== CODE BLOCKS ========== */
+        .code-block-wrapper {
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            margin-top: 24px;
+            margin-bottom: 32px;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .code-block-wrapper details {
+            width: 100%;
+        }
+
+        .code-block-wrapper summary {
+            padding: 14px 20px;
+            background: #1a1a1a;
+            color: var(--color-text-faded);
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid transparent;
+            transition: color 0.2s;
+            list-style: none;
+        }
+
+        .code-block-wrapper summary:hover {
+            color: var(--color-accent);
+        }
+
+        .code-block-wrapper summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .code-block-wrapper summary::after {
+            content: 'Show Code ▼';
+            font-size: 12px;
+            color: #666;
+        }
+
+        .code-block-wrapper details[open] summary::after {
+            content: 'Hide Code ▲';
+        }
+
+        .code-block-wrapper details[open] summary {
+            border-bottom-color: var(--color-border);
+        }
+
+        .code-block-content {
+            padding: 24px;
+            background: #0f0f0f;
+            overflow-x: auto;
+        }
+
+        .code-block-content pre {
+            margin: 0;
+            color: #bbbbbb;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* SYNTAX HIGHLIGHTING */
+        .token-keyword { color: #d188e6; font-weight: 600; }
+        .token-function { color: #7cb8ff; }
+        .token-string { color: #a5d487; font-style: italic; }
+        .token-comment { color: #7d8c74; font-style: italic; }
+        .token-variable { color: #ff8b94; }
+        .token-property { color: #f2bc79; }
+        .token-boolean { color: #f2bc79; font-weight: 600; }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #aaaaaa;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .back-link:hover {
+            color: var(--color-accent);
+            text-decoration: underline;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-content">
+        <a href="index.html" class="back-link">← Back to Main Audit</a>
+        
+        <div class="page-title">Sentry Privacy Audit</div>
+        <div class="page-subtitle">Verification Guide</div>
+
+        <p>This guide provides step-by-step instructions on how to locate, access, and verify the Sentry Session Replay configuration settings inside the Welo Data Assistant extension source code.</p>
+
+        <!-- Step 1 -->
+        <h2>1. Locating the Extension Source Code</h2>
+        <p>Locate the unpacked extension directory on your system. If you installed it normally via the Chrome Web Store, it is located in your Chrome User Data path under:</p>
+        
+        <p><code>%localappdata%\Google\Chrome\User Data\Default\Extensions\oceohhnabfcnjfcpppaegdfecladagcc\3.1.12_0\</code></p>
+        
+        <p>Copy the folder to your desktop or open it in a text/code editor (like VS Code or Notepad++). Open the following file in your editor: <code>content-script/index.js</code></p>
+
+        <!-- Step 2 -->
+        <h2>2. Finding the Sentry Configuration</h2>
+        <p>Because the extension file is minified (compressed onto very few lines), it is best to use your editor's "Find/Search" function (Ctrl+F).</p>
+        <p>Search for the key string <code>replaysSessionSampleRate</code>. This will take you directly to Sentry's initialization block, which configures how your rating sessions are recorded.</p>
+        <p>Because everything is on one long line, you can also search directly for <code>replaysOnErrorSampleRate:1</code> or <code>maskAllText:!1</code> to instantly verify those exact settings exist in the code. (Note: The minifier turns <code>false</code> into <code>!1</code> and <code>true</code> into <code>!0</code> to save space).</p>
+
+        <!-- Step 3 -->
+        <h2>3. The Code Proof</h2>
+        <p>Here is the exact Sentry configuration block found in <code>content-script/index.js</code>, formatted for readability:</p>
+        <div class="code-block-wrapper">
+            <details open>
+                <summary>View content-script/index.js</summary>
+                <div class="code-block-content">
+                    <pre><span class="token-comment">// Sentry Initialization inside Welo's content-script/index.js</span>
+<span class="token-variable">p</span>.<span class="token-function">init</span>({
+  <span class="token-property">dsn</span>: <span class="token-variable">f</span>, <span class="token-comment">// Points to Welo's self-hosted server: sentry.welocalize.tools</span>
+  <span class="token-property">environment</span>: <span class="token-variable">Ui</span>.<span class="token-property">environment</span>, <span class="token-comment">// "production"</span>
+  <span class="token-property">release</span>: <span class="token-comment">...</span>,
+  <span class="token-property">tracesSampleRate</span>: <span class="token-boolean">1</span>,
+  <span class="token-property">replaysSessionSampleRate</span>: <span class="token-boolean">.1</span>, <span class="token-comment">// 10% of sessions are recorded</span>
+  <span class="token-property">replaysOnErrorSampleRate</span>: <span class="token-boolean">1</span>, <span class="token-comment">// 100% of sessions with a JS error are recorded</span>
+  <span class="token-property">sendDefaultPii</span>: <span class="token-boolean">!1</span>,
+  <span class="token-property">skipBrowserExtensionCheck</span>: <span class="token-boolean">!0</span>,
+  <span class="token-property">integrations</span>: [
+    <span class="token-variable">p</span>.<span class="token-function">browserTracingIntegration</span>(),
+    <span class="token-variable">p</span>.<span class="token-function">replayIntegration</span>({
+      <span class="token-property">maskAllText</span>: <span class="token-boolean">!1</span>, <span class="token-comment">// Page text and task content are NOT masked (!1 means false)</span>
+      <span class="token-property">maskAllInputs</span>: <span class="token-boolean">!0</span>, <span class="token-comment">// Text typed into input fields IS masked (!0 means true)</span>
+      <span class="token-property">blockAllMedia</span>: <span class="token-boolean">!1</span>
+    })
+  ],
+  <span class="token-comment">...</span>
+})</pre>
+                </div>
+            </details>
+        </div>
+
+        <!-- Step 4 -->
+        <h2>4. Configuration Impact</h2>
+        <p>Here is what these configurations mean for the extension:</p>
+        <ul>
+            <li><strong>replaysSessionSampleRate: .1</strong><br>The extension rolls a 10% random chance (1 in 10) on every new session to record your screen interactions.</li>
+            <li><strong>replaysOnErrorSampleRate: 1</strong><br>If any JavaScript error occurs in your browser while rating (even minor, unrelated page errors), the extension immediately triggers a 100% capture of the session and uploads the recording.</li>
+            <li><strong>maskAllText: !1 (false)</strong><br>Because this is set to false, Sentry captures all visible text on the rating page (e.g., task queries, project guidelines, and injected DOM elements from other extensions) in plain text.</li>
+            <li><strong>maskAllInputs: !0 (true)</strong><br>Any text you manually type into input fields, textareas, or text-boxes is masked (hidden) and will not be visible in the recording.</li>
+            <li><strong>Self-Hosted Telemetry Server</strong><br>The destination URL is <code>sentry.welocalize.tools</code>. This confirms that all recorded telemetry is sent to private servers, rather than Sentry's public cloud.</li>
+        </ul>
+
+        <!-- Step 5 -->
+        <h2>5. The DOM Injection Risk</h2>
+        <p>Welo's extension does NOT scan your browser for other installed extensions. However, it can still "see" them visually through Sentry Replay.</p>
+        <ul>
+            <li><strong>Mechanism:</strong> Sentry does not record a video file. Instead, it uses the <code>rrweb</code> library to snapshot the webpage's HTML structure (DOM) and tracks every change using a <code>MutationObserver</code>.</li>
+            <li><strong>Injection Flaw:</strong> If an extension injects custom buttons or timers into the RaterHub webpage, <code>rrweb</code> captures that new HTML code.</li>
+            <li><strong>Risk:</strong> The developer's dashboard reconstructs this HTML into a visual playback. Because <code>maskAllText</code> is <code>false</code>, if you are unlucky enough and someone checks your session, they will clearly see your tools rendered on screen.</li>
+        </ul>
+
+        <!-- Step 6 -->
+        <h2>6. Continuous Upload Behavior</h2>
+        <p>It is important to understand that Sentry does NOT wait until you finish a task to upload the recording.</p>
+        <ul>
+            <li><strong>Near Real-Time:</strong> Sentry packages your screen activity into small chunks and uploads them continuously in the background (usually every 5 seconds) while you work.</li>
+            <li><strong>Closing the Tab:</strong> If you close the RaterHub tab or navigate away, the extension immediately triggers a final upload (<code>p.flush(500)</code>) to ensure the very last seconds of your session are successfully sent to the server.</li>
+        </ul>
+
+    </div>
+
+</body>
+
+</html>
