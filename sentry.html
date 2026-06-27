@@ -283,7 +283,7 @@
 
         <!-- Step 5 -->
         <h2>5. The DOM Injection Risk</h2>
-        <p>Welo's extension does NOT scan your browser for other installed extensions. However, it can still "see" them visually through Sentry Replay.</p>
+        <p>Welo's extension does NOT scan your browser for other installed extensions. However, it can still "see" them buttons or anything injected on the screen through Sentry Replay.</p>
         <ul>
             <li><strong>Mechanism:</strong> Sentry does not record a video file. Instead, it uses the <code>rrweb</code> library to snapshot the webpage's HTML structure (DOM) and tracks every change using a <code>MutationObserver</code>.</li>
             <li><strong>Injection Flaw:</strong> If an extension injects custom buttons or timers into the RaterHub webpage, <code>rrweb</code> captures that new HTML code.</li>
