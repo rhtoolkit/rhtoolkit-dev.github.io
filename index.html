@@ -255,8 +255,65 @@
         <!-- Intro -->
         <p>Welo Data Assistant is a universal tool used by multiple different Welocalize roles. For SQRs, invasive tracking features are off by default, as shown in the code below.</p>
 
-        <!-- Section 1: Other Extension Monitoring -->
-        <h2>1. Other Extension Monitoring</h2>
+        <!-- TL;DR Conclusion (Moved to Top) -->
+        <div class="minimal-tldr" style="margin-top: 20px; margin-bottom: 40px;">
+            <strong style="font-size: 18px; color: #ffffff; display: block; margin-bottom: 8px;">TL;DR Conclusion</strong>
+            <p>Majority of extension functions are currently turned off on RaterHub. It is also important to note that devs could enable full tracking in a future update.
+                I strongly advise against using extensions for RaterHub that are no longer actively supported by their developers. Thank you for reading!</p>
+        </div>
+
+        <!-- YOUTUBE VIDEO -->
+        <div style="margin-bottom: 60px; border-radius: 8px; overflow: hidden; border: 1px solid var(--color-border);">
+            <iframe width="100%" height="450" src="https://www.youtube.com/embed/COLOQUE_O_ID_DO_VIDEO_AQUI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+
+        <!-- Section 1: Screen Recording (Sentry Replay) -->
+        <h2>1. Screen Recording (Sentry Replay)</h2>
+        <p>The extension utilizes Sentry Replay, a standard developer tool used to record screen sessions for bug diagnostics. The source code specifies a <b>10% probability</b> that any given rating session will be recorded.</p>
+        <p>Because their text masking configuration is turned <b>OFF</b> (<code>maskAllText: false</code>), the recording captures all visible text and HTML elements on the page. Therefore, if you use an extension that injects custom buttons or timers directly onto RaterHub, those elements will be recorded.</p>
+        <p>For technical proof and risk mitigation strategies, review the complete deep-dive here: <br><br>
+            <a href="sentry.html">View Sentry Replay Verification Guide</a>
+        </p>
+        <br>
+        <span class="verdict verdict-info">Verdict: Telemetry Enabled (10% normal chance / 100% if JS bug appears)</span>
+
+        <!-- Section 2: Open Tabs Monitoring -->
+        <h2>2. Open Tabs Monitoring</h2>
+        <p>When you finish a task, Welo scans your browser and sends the URLs of <b>all your open tabs</b> directly to
+            their server. It is unclear exactly why they are collecting this data, but the code explicitly triggers it upon task completion.</p>
+
+        <div class="code-block-wrapper">
+            <details>
+                <summary>View Extension Source Code</summary>
+                <div class="code-block-content">
+                    <pre><span class="token-keyword">async function</span> <span class="token-function">sendTaskFinishedSignal</span>() {
+    <span class="token-keyword">let</span> <span class="token-variable">openTabs</span> = [];
+    
+    <span class="token-comment">// Step 1: Ask Chrome for a list of EVERY open tab</span>
+    <span class="token-keyword">const</span> <span class="token-variable">tabs</span> = <span class="token-keyword">await</span> chrome.tabs.<span class="token-function">query</span>({});
+    
+    <span class="token-comment">// Step 2: Extract just the URLs from that list</span>
+    <span class="token-variable">openTabs</span> = <span class="token-variable">tabs</span>.<span class="token-function">map</span>(<span class="token-variable">tab</span> =&gt; <span class="token-variable">tab</span>.url);
+    
+    <span class="token-comment">// Step 3: Send the URLs to the Welo server</span>
+    api.<span class="token-function">post</span>(<span class="token-string">'/user-activity'</span>, {
+        <span class="token-property">action</span>: <span class="token-string">"fulfill"</span>,
+        <span class="token-property">tabs</span>: <span class="token-variable">openTabs</span> <span class="token-comment">// &lt;-- This sends your personal tabs!</span>
+    });
+}</pre>
+                </div>
+            </details>
+        </div>
+
+        <div class="minimal-warning">
+            <p><strong>Recommendation:</strong> Do not leave personal tabs or any extension settings
+                (<code>chrome://extensions/</code>) page open while working.</p>
+        </div>
+        
+        <span class="verdict verdict-danger">Verdict: Actively Tracked.</span>
+
+        <!-- Section 3: Other Extension Monitoring -->
+        <h2>3. Other Extension Monitoring</h2>
         <p>While the extension's manifest asks for the <code>management</code> permission, a full search of the source
             code proves it never actually calls the <code>chrome.management</code> API. It has absolutely no ability to
             scan your browser, meaning it cannot see that you have RH Toolkit or any other extension installed.</p>
@@ -281,8 +338,8 @@
         
         <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
 
-        <!-- Section 2: Clipboard & Keyboard Tracking -->
-        <h2>2. Clipboard & Keyboard Tracking (Copy/Paste)</h2>
+        <!-- Section 4: Clipboard & Keyboard Tracking (Copy/Paste) -->
+        <h2>4. Clipboard & Keyboard Tracking (Copy/Paste)</h2>
         <p>Inside the extension's source code, the developers hardcoded a "feature flag" object that controls where the
             copy/paste and keyboard tracking is allowed to run. Because RaterHub is set to false, the extension
             immediately kills the clipboard and keyboard monitors before they ever start.</p>
@@ -315,8 +372,8 @@
         
         <span class="verdict verdict-safe">Verdict: Completely Disabled. 100% Safe.</span>
 
-        <!-- Section 3: Mouse Tracking -->
-        <h2>3. Mouse Tracking</h2>
+        <!-- Section 5: Mouse Tracking -->
+        <h2>5. Mouse Tracking</h2>
         <p>The extension ignores your general mouse movements, clicks, and scrolling speed. The only mouse-tracking code
             inside the extension is activated exclusively when you use the "Report a Bug" feature to draw a screenshot
             rectangle.</p>
@@ -353,8 +410,8 @@
             
         <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
 
-        <!-- Section 4: Auto Submit & Button Clicks -->
-        <h2>4. Auto Submit & Button Clicks</h2>
+        <!-- Section 6: Auto Submit & Button Clicks -->
+        <h2>6. Auto Submit & Button Clicks</h2>
         <p>Welo does not track physical mouse clicks on the "Submit", "Skip", or "Cancel" buttons. Instead, it monitors
             the resulting network data you send to RaterHub. Because of this, using an automation tool to
             programmatically click "Submit" is completely indistinguishable from a real human click.</p>
@@ -379,57 +436,6 @@ chrome.webRequest.onBeforeRequest.<span class="token-function">addListener</span
         </div>
         
         <span class="verdict verdict-safe">Verdict: 100% Safe to Automate.</span>
-
-        <!-- Section 5: Open Tabs Monitoring -->
-        <h2>5. Open Tabs Monitoring</h2>
-        <p>When you finish a task, Welo scans your browser and sends the URLs of <b>all your open tabs</b> directly to
-            their server. It is unclear exactly why they are collecting this data, but the code explicitly triggers it upon task completion.</p>
-
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View Extension Source Code</summary>
-                <div class="code-block-content">
-                    <pre><span class="token-keyword">async function</span> <span class="token-function">sendTaskFinishedSignal</span>() {
-    <span class="token-keyword">let</span> <span class="token-variable">openTabs</span> = [];
-    
-    <span class="token-comment">// Step 1: Ask Chrome for a list of EVERY open tab</span>
-    <span class="token-keyword">const</span> <span class="token-variable">tabs</span> = <span class="token-keyword">await</span> chrome.tabs.<span class="token-function">query</span>({});
-    
-    <span class="token-comment">// Step 2: Extract just the URLs from that list</span>
-    <span class="token-variable">openTabs</span> = <span class="token-variable">tabs</span>.<span class="token-function">map</span>(<span class="token-variable">tab</span> =&gt; <span class="token-variable">tab</span>.url);
-    
-    <span class="token-comment">// Step 3: Send the URLs to the Welo server</span>
-    api.<span class="token-function">post</span>(<span class="token-string">'/user-activity'</span>, {
-        <span class="token-property">action</span>: <span class="token-string">"fulfill"</span>,
-        <span class="token-property">tabs</span>: <span class="token-variable">openTabs</span> <span class="token-comment">// &lt;-- This sends your personal tabs!</span>
-    });
-}</pre>
-                </div>
-            </details>
-        </div>
-
-        <div class="minimal-warning">
-            <p><strong>Recommendation:</strong> Do not leave personal tabs or any extension settings
-                (<code>chrome://extensions/</code>) page open while working.</p>
-        </div>
-        
-        <span class="verdict verdict-danger">Verdict: Actively Tracked.</span>
-
-        <!-- Section 6: Sentry Replay -->
-        <h2>6. Screen Recording (Sentry Replay)</h2>
-        <p>The extension utilizes Sentry Replay, a standard developer tool used to record screen sessions for bug diagnostics. The source code specifies a <b>10% probability</b> that any given rating session will be recorded.</p>
-        <p>Because their text masking configuration is turned <b>OFF</b> (<code>maskAllText: false</code>), the recording captures all visible text and HTML elements on the page. Therefore, if you use an extension that injects custom buttons or timers directly onto RaterHub, those elements will be recorded.</p>
-        <p>For technical proof and risk mitigation strategies, review the complete deep-dive here: <br><br>
-            <a href="sentry.html">View Sentry Replay Verification Guide</a>
-        </p>
-        <br>
-        <span class="verdict verdict-info">Verdict: Telemetry Enabled (10% normal chance / 100% if JS bug appears)</span>
-
-        <!-- TL;DR Conclusion -->
-        <div class="minimal-tldr">
-            <strong style="font-size: 18px; color: #ffffff; display: block; margin-bottom: 8px;">TL;DR Conclusion</strong>
-            <p>Majority of extension functions are currently turned off on RaterHub. It is also important to note that devs could enable full tracking in a future update.
-                I strongly advise against using extensions for RaterHub that are no longer actively supported by their developers. Thank you for reading!</p>
 
     </div>
 
