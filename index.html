@@ -307,17 +307,15 @@
         </div>
 
         <div class="minimal-warning">
-            <p><strong>Recommendation:</strong> Do not leave personal tabs or any extension settings
-                (<code>chrome://extensions/</code>) page open while working.</p>
+            <p><strong>Recommendation:</strong> Do not leave personal tabs or any extension settings page open while working.</p>
         </div>
         
         <span class="verdict verdict-danger">Verdict: Actively Tracked.</span>
 
         <!-- Section 3: Other Extension Monitoring -->
         <h2>3. Other Extension Monitoring</h2>
-        <p>While the extension's manifest asks for the <code>management</code> permission, a full search of the source
-            code proves it never actually calls the <code>chrome.management</code> API. It has absolutely no ability to
-            scan your browser, meaning it cannot see that you have RH Toolkit or any other extension installed.</p>
+        <p>While the extension's manifest asks for the <code>management</code> permission, source
+            code proves it never actually calls the <code>chrome.management</code> API. </p>
 
         <div class="code-block-wrapper">
             <details>
@@ -327,15 +325,15 @@
     <span class="token-string">"permissions"</span>: [
         <span class="token-string">"tabs"</span>,
         <span class="token-string">"storage"</span>,
-        <span class="token-string">"management"</span>, <span class="token-comment">// &lt;-- It asks for permission to see other extensions</span>
+        <span class="token-string">"management"</span>,
         <span class="token-string">"webRequest"</span>
     ]
 }</pre>
                 </div>
             </details>
         </div>
-        <p><b>But does it ever use it?</b><br>Searching the entire Welo source code for the command
-            <code>chrome.management.getAll()</code> or <code>management.getAll</code> yields <b>0 Results</b>.</p>
+        <p><b>How to check:</b><br>Search source code for the command
+            <code>chrome.management.getAll()</code> or <code>management.getAll</code> will yields <b>0 results</b>.</p>
         
         <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
 
@@ -407,7 +405,7 @@
             </details>
         </div>
         <p>If you do not open the "Report a Bug" tool, the <code>editor__tool</code> UI is never created, and it is
-            impossible to trigger this tracking code. Your mouse movements are completely private.</p>
+            impossible to trigger this tracking code.</p>
             
         <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
 
