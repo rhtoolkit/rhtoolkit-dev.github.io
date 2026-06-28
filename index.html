@@ -266,7 +266,6 @@
         <p>The extension utilizes Sentry Replay, a standard developer tool used to record screen sessions for bug diagnostics. The source code specifies a <b>10% probability</b> that any given rating session will be recorded.</p>
         <p>Because their text masking configuration is turned <b>OFF</b> (<code>maskAllText: false</code>), the recording captures all visible text and HTML elements on the page. Therefore, if you use an extension that injects custom buttons or timers directly onto RaterHub, those elements will be recorded.</p>
         <p>Technical proof review here: <br><br>
-            <a href="sentry.html">View Sentry Replay Verification Guide</a>
         </p>
         <br>
 
@@ -275,6 +274,8 @@
             <iframe width="100%" height="450" src="https://www.youtube.com/embed/scEaWqDbj98" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         </div>
         <p>The video above shows Sentry working even outside of tasks. Anyone can test it by following the same steps as in the video. Note that it only records when the mouse moves. </p>
+        <a href="sentry.html">View Sentry Replay Verification Guide</a>
+        
         <span class="verdict verdict-info">Verdict: Telemetry Enabled (10% normal chance / 100% if JS bug appears)</span>
 
         <!-- Section 2: Open Tabs Monitoring -->
