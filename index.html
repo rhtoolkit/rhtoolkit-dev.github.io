@@ -204,13 +204,37 @@
         }
 
         /* SYNTAX HIGHLIGHTING (Colors Restored) */
-        .token-keyword { color: #d188e6; font-weight: 600; }
-        .token-function { color: #7cb8ff; }
-        .token-string { color: #a5d487; font-style: italic; }
-        .token-comment { color: #7d8c74; font-style: italic; }
-        .token-variable { color: #ff8b94; }
-        .token-property { color: #f2bc79; }
-        .token-boolean { color: #f2bc79; font-weight: 600; }
+        .token-keyword {
+            color: #d188e6;
+            font-weight: 600;
+        }
+
+        .token-function {
+            color: #7cb8ff;
+        }
+
+        .token-string {
+            color: #a5d487;
+            font-style: italic;
+        }
+
+        .token-comment {
+            color: #7d8c74;
+            font-style: italic;
+        }
+
+        .token-variable {
+            color: #ff8b94;
+        }
+
+        .token-property {
+            color: #f2bc79;
+        }
+
+        .token-boolean {
+            color: #f2bc79;
+            font-weight: 600;
+        }
 
         a {
             color: #aaaaaa;
@@ -249,100 +273,98 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
 
-        <div class="page-title">Welo Data Assistant Audit (Version 3.1.12)</div>
+        <div class="page-title">Welo Data Assistant Audit (Version 3.2.0)</div>
         <div class="page-subtitle">Breakdown of what the extension monitors, verified by audit of its source code.</div>
 
         <!-- Intro -->
-        <p>Welo Data Assistant is a universal tool used by multiple different Welocalize roles. For SQRs, invasive tracking features are off by default, as shown in the code below.</p>
+        <p>Welo Data Assistant is a universal tool used by multiple different Welocalize roles. For SQRs, invasive
+            tracking features are off by default, as shown in the code below.</p>
 
         <!-- TL;DR Conclusion (Moved to Top) -->
         <div class="minimal-tldr" style="margin-top: 20px; margin-bottom: 40px;">
-            <strong style="font-size: 18px; color: #ffffff; display: block; margin-bottom: 8px;">TL;DR Conclusion</strong>
-            <p>Aggressive tracking features are turned off this version. However, diagnostic tools such as screen recording and open tab monitoring remain active. It is important to note that developers could enable full tracking in a future update. I strongly advise against using extensions for RaterHub that are no longer actively supported by their developers.</p>
+            <strong style="font-size: 18px; color: #ffffff; display: block; margin-bottom: 8px;">TL;DR
+                Conclusion</strong>
+            <p>In version 3.2.0, Welo shifted from passive network monitoring to actively injecting code into the
+                RaterHub DOM. However, invasive features like Screen Recording (Sentry) and Extension monitoring
+                permission have been disabled. RHTS architecture remains fully undetectable and synchronized with Welo's
+                new physical button tracking.</p>
         </div>
 
         <!-- RHTS Announcement -->
         <div style="text-align: center; margin-bottom: 60px;">
-            <strong style="font-size: 20px; color: #c4b5e3; display: block; margin-bottom: 8px;">RHTS is Now Available</strong>
-            <p style="margin-bottom: 16px;">The background version of RH Toolkit is now live.<br>$2/month subscription on Stripe. 7-day free trial included.</p>
-            <a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb" target="_blank" style="color: #ffffff; background: #1a1a1a; padding: 10px 20px; border-radius: 4px; border: 1px solid var(--color-border); text-decoration: none; display: inline-block; font-size: 15px; font-weight: 600;">Download on Chrome Web Store ↗</a>
+            <strong style="font-size: 20px; color: #c4b5e3; display: block; margin-bottom: 8px;">RHTS is Now
+                Available</strong>
+            <p style="margin-bottom: 16px;">The background version of RH Toolkit is now live.<br>$2/month subscription
+                on Stripe. 7-day free trial included.</p>
+            <a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb"
+                target="_blank"
+                style="color: #ffffff; background: #1a1a1a; padding: 10px 20px; border-radius: 4px; border: 1px solid var(--color-border); text-decoration: none; display: inline-block; font-size: 15px; font-weight: 600;">Download
+                on Chrome Web Store ↗</a>
         </div>
 
         <!-- Section 1: Screen Recording (Sentry Replay) -->
         <h2>1. Screen Recording (Sentry Replay)</h2>
-        <p>The extension utilizes Sentry Replay, a standard developer tool used to record screen sessions for bug diagnostics. The source code specifies a <b>10% probability</b> that any given rating session will be recorded.</p>
-        <p>Because their text masking configuration is turned <b>OFF</b> (<code>maskAllText: false</code>), the recording captures all visible text and HTML elements on the page. Therefore, if you use an extension that injects custom buttons or timers directly onto RaterHub, those elements will be recorded.</p>
-        <p>Technical proof review here: <br><br>
-        </p>
-        <br>
-
-        <!-- YOUTUBE VIDEO -->
-        <div style="margin-bottom: 40px; border-radius: 8px; overflow: hidden; border: 1px solid var(--color-border);">
-            <iframe width="100%" height="450" src="https://www.youtube.com/embed/scEaWqDbj98" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
-        <p>The video above shows Sentry working even outside of tasks. Anyone can test it by following the same steps as in the video. Note that it only records when the mouse moves. </p>
-        <a href="sentry.html">View Sentry Replay Verification Guide</a>
-        
-        <span class="verdict verdict-danger">Verdict: Telemetry Enabled (10% normal chance / 100% if JS bug appears)</span>
-
-        <!-- Section 2: Open Tabs Monitoring -->
-        <h2>2. Open Tabs Monitoring</h2>
-        <p>When you finish a task, Welo scans your browser and sends the URLs of <b>all your open tabs</b> directly to
-            their server. It is unclear exactly why they are collecting this data, but the code explicitly triggers it upon task completion.</p>
+        <p>The extension utilizes Sentry Replay, a standard developer tool used to record screen sessions for bug
+            diagnostics. In older versions, there was a 10% chance of recording.</p>
+        <p>In v3.2.0, the developers have added a strict "early return" killswitch specifically for RaterHub. This
+            completely blocks the Sentry initialization script from running on the platform, bringing the recording
+            chance down to 0%.</p>
 
         <div class="code-block-wrapper">
             <details>
                 <summary>View Extension Source Code</summary>
                 <div class="code-block-content">
-                    <pre><span class="token-keyword">async function</span> <span class="token-function">sendTaskFinishedSignal</span>() {
-    <span class="token-keyword">let</span> <span class="token-variable">openTabs</span> = [];
-    
-    <span class="token-comment">// Step 1: Ask Chrome for a list of EVERY open tab</span>
-    <span class="token-keyword">const</span> <span class="token-variable">tabs</span> = <span class="token-keyword">await</span> chrome.tabs.<span class="token-function">query</span>({});
-    
-    <span class="token-comment">// Step 2: Extract just the URLs from that list</span>
-    <span class="token-variable">openTabs</span> = <span class="token-variable">tabs</span>.<span class="token-function">map</span>(<span class="token-variable">tab</span> =&gt; <span class="token-variable">tab</span>.url);
-    
-    <span class="token-comment">// Step 3: Send the URLs to the Welo server</span>
-    api.<span class="token-function">post</span>(<span class="token-string">'/user-activity'</span>, {
-        <span class="token-property">action</span>: <span class="token-string">"fulfill"</span>,
-        <span class="token-property">tabs</span>: <span class="token-variable">openTabs</span> <span class="token-comment">// &lt;-- This sends your personal tabs!</span>
-    });
-}</pre>
+                    <pre><span class="token-comment">// Minified check: n() returns false on RaterHub</span>
+<span class="token-keyword">function</span> <span class="token-function">n</span>(){<span class="token-keyword">const</span> <span class="token-variable">f</span>=window.location.hostname;<span class="token-keyword">return</span> <span class="token-function">t</span>().<span class="token-function">some</span>(<span class="token-variable">p</span>=&gt;<span class="token-variable">f</span>.<span class="token-function">includes</span>(<span class="token-variable">p</span>))}
+
+<span class="token-comment">// The Killswitch: "If not allowed (!n()), return and abort"</span>
+<span class="token-keyword">if</span>(window.<span class="token-function">addEventListener</span>(<span class="token-string">"message"</span>, <span class="token-comment">/* ... */</span>),!<span class="token-function">n</span>())<span class="token-keyword">return</span>;
+
+<span class="token-comment">// Function o() that initializes Sentry is never called</span>
+<span class="token-keyword">function</span> <span class="token-function">o</span>(){<span class="token-keyword">const</span> <span class="token-variable">f</span>=Wi.sentryDsn;Promise.<span class="token-function">resolve</span>().<span class="token-function">then</span>(<span class="token-comment">/* ... */</span>)}</pre>
+                </div>
+            </details>
+        </div>
+
+        <span class="verdict verdict-safe">Verdict: Telemetry Disabled (0% chance on RaterHub)</span>
+
+        <!-- Section 2: Open Tabs Monitoring -->
+        <h2>2. Open Tabs Monitoring</h2>
+        <p>When you finish a task, Welo scans your browser and sends the URLs of <b>all your open tabs</b> directly to
+            their server. </p>
+        <p>In version 3.2.0, they have also added a "bot capability" counter (<code>tabOpened</code>) that logs every
+            time you open a new tab while a task is active.</p>
+
+        <div class="code-block-wrapper">
+            <details>
+                <summary>View Extension Source Code</summary>
+                <div class="code-block-content">
+                    <pre><span class="token-comment">// They now actively count tab openings during a task</span>
+<span class="token-comment">// Found in assets/index-F-XNxVC-.js</span>
+chrome.tabs.onCreated.<span class="token-function">addListener</span>(<span class="token-variable">e</span>=&gt;{<span class="token-variable">a</span>.<span class="token-function">manageEvent</span>({<span class="token-property">action</span>:<span class="token-string">"botCapabilities"</span>,<span class="token-property">type</span>:<span class="token-string">"tabOpened"</span>}).<span class="token-function">catch</span>(<span class="token-variable">t</span>=&gt;{})})
+
+<span class="token-comment">// And still send all open tab URLs on submit</span>
+<span class="token-comment">// Found in assets/index-F-XNxVC-.js</span>
+<span class="token-keyword">let</span> <span class="token-variable">i</span>=[];<span class="token-keyword">try</span>{<span class="token-variable">i</span>=(<span class="token-keyword">await</span> chrome.tabs.<span class="token-function">query</span>({})).<span class="token-function">map</span>(<span class="token-variable">d</span>=&gt;<span class="token-variable">d</span>.url).<span class="token-function">filter</span>(<span class="token-boolean">Boolean</span>)}<span class="token-keyword">catch</span>{}</pre>
                 </div>
             </details>
         </div>
 
         <div class="minimal-warning">
-            <p><strong>Recommendation:</strong> Do not leave personal tabs or any extension settings page open while working.</p>
+            <p><strong>Recommendation:</strong> Do not leave personal tabs or any extension settings page open while
+                working.</p>
         </div>
-        
+
         <span class="verdict verdict-danger">Verdict: Actively Tracked.</span>
 
         <!-- Section 3: Other Extension Monitoring -->
         <h2>3. Other Extension Monitoring</h2>
-        <p>While the extension's manifest asks for the <code>management</code> permission, source
-            code proves it never actually calls the <code>chrome.management</code> API. </p>
+        <p>In version 3.2.0, the <code>management</code> permission has been <b>completely removed</b> from the
+            <code>manifest.json</code> file.</p>
+        <p>The extension no longer requests this permission, meaning it has zero ability to see what other extensions
+            you have installed on your browser.</p>
 
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View manifest.json</summary>
-                <div class="code-block-content">
-                    <pre>{
-    <span class="token-string">"permissions"</span>: [
-        <span class="token-string">"tabs"</span>,
-        <span class="token-string">"storage"</span>,
-        <span class="token-string">"management"</span>,
-        <span class="token-string">"webRequest"</span>
-    ]
-}</pre>
-                </div>
-            </details>
-        </div>
-        <p><b>How to check:</b><br>Search source code for the command
-            <code>chrome.management.getAll()</code> or <code>management.getAll</code> will yields <b>0 results</b>.</p>
-        
-        <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
+        <span class="verdict verdict-safe">Verdict: NOT tracked. (Permission Removed)</span>
 
         <!-- Section 4: Clipboard & Keyboard Tracking (Copy/Paste) -->
         <h2>4. Clipboard & Keyboard Tracking (Copy/Paste)</h2>
@@ -354,28 +376,22 @@
             <details>
                 <summary>View Extension Source Code</summary>
                 <div class="code-block-content">
-                    <pre><span class="token-comment">// The hardcoded configuration in the extension</span>
-<span class="token-keyword">const</span> <span class="token-variable">copyBlockingConfig</span> = {
-    <span class="token-property">ewoq</span>: <span class="token-boolean">true</span>,       <span class="token-comment">// &lt;-- Tracking is ENABLED for AQRs</span>
-    <span class="token-property">raterhub</span>: <span class="token-boolean">false</span>,  <span class="token-comment">// &lt;-- Completely DISABLED for SQRs</span>
-    <span class="token-property">heartex</span>: <span class="token-boolean">false</span>,
-    <span class="token-property">feather</span>: <span class="token-boolean">false</span>
-};
+                    <pre><span class="token-comment">// The feature flags allowing tracking per platform</span>
+<span class="token-comment">// (Notice raterhub is explicitly set to false/!1)</span>
+<span class="token-keyword">const</span> <span class="token-variable">y_</span>={<span class="token-property">ewoq</span>:<span class="token-boolean">!0</span>,<span class="token-property">raterhub</span>:<span class="token-boolean">!1</span>,<span class="token-property">heartex</span>:<span class="token-boolean">!1</span>,<span class="token-property">feather</span>:<span class="token-boolean">!1</span>}
 
-<span class="token-keyword">function</span> <span class="token-function">startClipboardMonitor</span>() {
-    <span class="token-keyword">const</span> <span class="token-variable">platform</span> = <span class="token-function">getCurrentPlatform</span>(); <span class="token-comment">// e.g. 'raterhub'</span>
+<span class="token-comment">// The Killswitch: Aborts listener injection if platform is false</span>
+<span class="token-keyword">function</span> <span class="token-function">d</span>(){
+    <span class="token-keyword">const</span> <span class="token-variable">f</span>=<span class="token-function">r</span>();
+    <span class="token-keyword">if</span>(!<span class="token-variable">f</span>||!<span class="token-function">E_</span>(<span class="token-variable">f</span>))<span class="token-keyword">return</span>; <span class="token-comment">// &lt;-- Immediately dies here on RaterHub</span>
     
-    <span class="token-comment">// The Killswitch:</span>
-    <span class="token-comment">// If the platform is 'raterhub', it checks the config and sees 'false'.</span>
-    <span class="token-comment">// The word 'return' tells the computer to STOP the function instantly.</span>
-    <span class="token-keyword">if</span> (!<span class="token-variable">copyBlockingConfig</span>[<span class="token-variable">platform</span>]) {
-        <span class="token-keyword">return</span>; 
-    }
+    <span class="token-comment">// ... Otherwise starts clipboard listeners ...</span>
+    document.<span class="token-function">addEventListener</span>(<span class="token-string">"paste"</span>, <span class="token-comment">/*...*/</span>)
 }</pre>
                 </div>
             </details>
         </div>
-        
+
         <span class="verdict verdict-safe">Verdict: Completely Disabled. 100% Safe.</span>
 
         <!-- Section 5: Mouse Tracking -->
@@ -384,63 +400,40 @@
             inside the extension is activated exclusively when you use the "Report a Bug" feature to draw a screenshot
             rectangle.</p>
 
+        <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
+
+        <!-- Section 6: Auto Submit & DOM Monitoring -->
+        <h2>6. Auto Submit & DOM Monitoring</h2>
+        <p>In version 3.2.0, Welo shifted from monitoring invisible network requests to actively injecting listeners
+            into the RaterHub page. They now add an <code>addEventListener("click")</code> to the physical "Submit" and
+            "Cancel" buttons.</p>
+        <p>Additionally, they scrape the Estimated Task Time (AET) directly from the screen
+            (<code>.ewok-estimated-task-weight</code>) to override and verify the official task completion time on their
+            servers.</p>
+
+        <p><b>Is it safe to automate?</b> Yes. Because their new code fails to verify the <code>event.isTrusted</code>
+            property, using a stealth automation tool like RHTS to programmatically click "Submit" perfectly triggers
+            their new physical listener. This makes your automated background clicks completely indistinguishable from a
+            real human clicking the button.</p>
+
         <div class="code-block-wrapper">
             <details>
                 <summary>View Extension Source Code</summary>
                 <div class="code-block-content">
-                    <pre><span class="token-comment">// The Mouse Tracker only exists inside the Bug Reporter User Interface (class: "editor__tool")</span>
-<span class="token-keyword">const</span> <span class="token-variable">FeedbackScreenshot</span> = {
-    <span class="token-function">setup</span>() {
-        <span class="token-comment">// Step 1: You click your mouse down to start drawing the screenshot box</span>
-        document.<span class="token-function">addEventListener</span>(<span class="token-string">"mousedown"</span>, <span class="token-keyword">function</span>(<span class="token-variable">event</span>) {
-            
-            <span class="token-comment">// Step 2: IT TURNS ON THE MOUSE TRACKER</span>
-            <span class="token-comment">// It only starts watching the mouse *after* you click down to draw</span>
-            document.<span class="token-function">addEventListener</span>(<span class="token-string">"mousemove"</span>, <span class="token-function">drawRectangle</span>);
-        });
+                    <pre><span class="token-comment">// Welo 3.2.0 tracking the exact submit buttons (from background.js)</span>
+<span class="token-keyword">const</span> <span class="token-variable">r</span>=[<span class="token-string">"ewok-task-submit-button"</span>,<span class="token-string">"ewok-task-submit-done-button"</span>]
 
-        <span class="token-comment">// Step 3: You release the mouse button (finished drawing the box)</span>
-        document.<span class="token-addEventListener">addEventListener</span>(<span class="token-string">"mouseup"</span>, <span class="token-keyword">function</span>() {
-            
-            <span class="token-comment">// Step 4: IT DESTROYS THE MOUSE TRACKER</span>
-            <span class="token-comment">// It instantly stops watching your mouse</span>
-            document.<span class="token-function">removeEventListener</span>(<span class="token-string">"mousemove"</span>, <span class="token-function">drawRectangle</span>);
-        });
-    }
+<span class="token-keyword">for</span>(<span class="token-keyword">const</span> <span class="token-variable">c</span> <span class="token-keyword">of</span> <span class="token-variable">r</span>){
+    <span class="token-keyword">const</span> <span class="token-variable">u</span>=document.<span class="token-function">getElementById</span>(<span class="token-variable">c</span>);
+    
+    <span class="token-comment">// They add a "click" listener. Because they don't verify event.isTrusted,</span>
+    <span class="token-comment">// automated clicks from RHTS trigger this perfectly.</span>
+    <span class="token-variable">u</span>&amp;&amp;<span class="token-variable">u</span>.<span class="token-function">getAttribute</span>(<span class="token-string">"listener"</span>)!==<span class="token-string">"true"</span>&amp;&amp;(<span class="token-variable">u</span>.<span class="token-function">addEventListener</span>(<span class="token-string">"click"</span>,<span class="token-variable">s</span>,{<span class="token-property">capture</span>:<span class="token-boolean">!0</span>}),<span class="token-variable">u</span>.<span class="token-function">setAttribute</span>(<span class="token-string">"listener"</span>,<span class="token-string">"true"</span>))
 }</pre>
                 </div>
             </details>
         </div>
-        <p>If you do not open the "Report a Bug" tool, the <code>editor__tool</code> UI is never created, and it is
-            impossible to trigger this tracking code.</p>
-            
-        <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
 
-        <!-- Section 6: Auto Submit & Button Clicks -->
-        <h2>6. Auto Submit & Button Clicks</h2>
-        <p>Welo does not track physical mouse clicks on the "Submit", "Skip", or "Cancel" buttons. Instead, it monitors
-            the resulting network data you send to RaterHub. Because of this, using an automation tool to
-            programmatically click "Submit" is completely indistinguishable from a real human click.</p>
-
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View Extension Source Code</summary>
-                <div class="code-block-content">
-                    <pre><span class="token-comment">// It listens to invisible network requests, NOT physical mouse clicks</span>
-chrome.webRequest.onBeforeRequest.<span class="token-function">addListener</span>(
-    <span class="token-keyword">function</span>(<span class="token-variable">request</span>) {
-        <span class="token-comment">// Step 1: Did the user just submit task data to the RaterHub server?</span>
-        <span class="token-keyword">if</span> (<span class="token-variable">request</span>.url.<span class="token-function">includes</span>(<span class="token-string">"/evaluation/rater/task/commit"</span>)) {
-            <span class="token-comment">// Step 2: If yes, trigger the task finished signal</span>
-            <span class="token-function">sendTaskFinishedSignal</span>();
-        }
-    },
-    { <span class="token-property">urls</span>: [<span class="token-string">"https://www.raterhub.com/evaluation/rater/task/*"</span>] }
-);</pre>
-                </div>
-            </details>
-        </div>
-        
         <span class="verdict verdict-safe">Verdict: 100% Safe to Automate.</span>
 
     </div>
