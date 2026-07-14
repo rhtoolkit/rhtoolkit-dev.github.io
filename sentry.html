@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Sentry Replay Verification | RH Toolkit</title>
+    <title>Welo Security Audit | RH Toolkit</title>
     <style>
         :root {
-            --color-bg-main: #141414; /* Deep minimalist grey/black */
+            --color-bg-main: #141414;
             --color-text-main: #e2e2e2;
             --color-text-faded: #888888;
             --color-border: #2e2e2e;
@@ -67,20 +67,6 @@
             margin-bottom: 24px;
         }
 
-        ul {
-            margin-bottom: 24px;
-            padding-left: 20px;
-            color: #cccccc;
-        }
-
-        li {
-            margin-bottom: 12px;
-        }
-
-        strong {
-            color: #e2e2e2;
-        }
-
         code {
             font-family: Consolas, Monaco, 'Courier New', monospace;
             background-color: #1f1f1f;
@@ -89,13 +75,44 @@
             border-radius: 4px;
             border: 1px solid var(--color-border);
             font-size: 14px;
-            word-break: break-all;
+        }
+
+        /* ========== MINIMAL ALERTS / VERDICTS ========== */
+        .verdict {
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 16px;
+            margin-bottom: 40px;
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border);
+            background: #1a1a1a;
+            color: #aaaaaa;
+        }
+
+        .verdict-safe {
+            color: #6ee7b7;
+            border-color: rgba(110, 231, 183, 0.3);
+            background: rgba(110, 231, 183, 0.05);
+        }
+
+        .verdict-danger {
+            color: #ff8b8b;
+            border-color: rgba(229, 115, 115, 0.3);
+            background: rgba(229, 115, 115, 0.05);
+        }
+
+        .verdict-info {
+            color: #c4b5e3;
+            border-color: rgba(196, 181, 227, 0.3);
+            background: rgba(196, 181, 227, 0.05);
         }
 
         .minimal-tldr {
             border-left: 2px solid var(--color-text-faded);
             padding-left: 24px;
-            margin-top: 40px;
+            margin-top: 80px;
             padding-top: 4px;
             padding-bottom: 4px;
         }
@@ -105,13 +122,27 @@
             color: #e2e2e2;
         }
 
+        .minimal-warning {
+            border-left: 2px solid #e57373;
+            padding-left: 24px;
+            margin-top: 32px;
+            margin-bottom: 32px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+
+        .minimal-warning p {
+            margin-bottom: 0;
+            color: #cccccc;
+        }
+
         /* ========== CODE BLOCKS ========== */
         .code-block-wrapper {
             background: transparent;
             border: 1px solid var(--color-border);
             border-radius: 6px;
             margin-top: 24px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
             overflow: hidden;
             display: inline-block;
             width: 100%;
@@ -172,27 +203,49 @@
             line-height: 1.6;
         }
 
-        /* SYNTAX HIGHLIGHTING */
-        .token-keyword { color: #d188e6; font-weight: 600; }
-        .token-function { color: #7cb8ff; }
-        .token-string { color: #a5d487; font-style: italic; }
-        .token-comment { color: #7d8c74; font-style: italic; }
-        .token-variable { color: #ff8b94; }
-        .token-property { color: #f2bc79; }
-        .token-boolean { color: #f2bc79; font-weight: 600; }
-
-        .back-link {
-            display: inline-block;
-            margin-bottom: 30px;
-            color: #aaaaaa;
-            text-decoration: none;
+        /* SYNTAX HIGHLIGHTING (Colors Restored) */
+        .token-keyword {
+            color: #d188e6;
             font-weight: 600;
-            font-size: 14px;
         }
-        
-        .back-link:hover {
-            color: var(--color-accent);
+
+        .token-function {
+            color: #7cb8ff;
+        }
+
+        .token-string {
+            color: #a5d487;
+            font-style: italic;
+        }
+
+        .token-comment {
+            color: #7d8c74;
+            font-style: italic;
+        }
+
+        .token-variable {
+            color: #ff8b94;
+        }
+
+        .token-property {
+            color: #f2bc79;
+        }
+
+        .token-boolean {
+            color: #f2bc79;
+            font-weight: 600;
+        }
+
+        a {
+            color: #aaaaaa;
             text-decoration: underline;
+            text-decoration-color: #555555;
+            text-underline-offset: 4px;
+        }
+
+        a:hover {
+            color: var(--color-accent);
+            text-decoration-color: var(--color-accent);
         }
 
         ::-webkit-scrollbar {
@@ -217,86 +270,171 @@
 
 <body>
 
+    <!-- MAIN CONTENT -->
     <div class="main-content">
-        <a href="index.html" class="back-link">← Back to Main Audit</a>
-        
-        <div class="page-title">Sentry Privacy Audit</div>
-        <div class="page-subtitle">Verification Guide</div>
 
-        <p>This guide provides step-by-step instructions on how to locate, access, and verify the Sentry Session Replay configuration settings inside the Welo Data Assistant extension source code.</p>
+        <div class="page-title">Welo Data Assistant Audit (Version 3.2.0)</div>
+        <div class="page-subtitle">Breakdown of what the extension monitors, verified by audit of its source code.</div>
 
-        <!-- Step 1 -->
-        <h2>1. Locating the Extension Source Code</h2>
-        <p>Locate the unpacked extension directory on your system. If you installed it normally via the Chrome Web Store, it is located in your Chrome User Data path under:</p>
-        
-        <p><code>%localappdata%\Google\Chrome\User Data\Default\Extensions\oceohhnabfcnjfcpppaegdfecladagcc\3.1.12_0\</code></p>
-        
-        <p>Copy the folder to your desktop or open it in a text/code editor (like VS Code or Notepad++). Open the following file in your editor: <code>content-script/index.js</code></p>
+        <!-- Intro -->
+        <p>Welo Data Assistant is a universal tool used by multiple different Welocalize roles. For SQRs, invasive
+            tracking features are off by default, as shown in the code below.</p>
 
-        <!-- Step 2 -->
-        <h2>2. Finding the Sentry Configuration</h2>
-        <p>Because the extension file is minified (compressed onto very few lines), it is best to use your editor's "Find/Search" function (Ctrl+F).</p>
-        <p>Search for the key string <code>replaysSessionSampleRate</code>. This will take you directly to Sentry's initialization block, which configures how your rating sessions are recorded.</p>
-        <p>Because everything is on one long line, you can also search directly for <code>replaysOnErrorSampleRate:1</code> or <code>maskAllText:!1</code> to instantly verify those exact settings exist in the code. (Note: The minifier turns <code>false</code> into <code>!1</code> and <code>true</code> into <code>!0</code> to save space).</p>
+        <!-- TL;DR Conclusion (Moved to Top) -->
+        <div class="minimal-tldr" style="margin-top: 20px; margin-bottom: 40px;">
+            <strong style="font-size: 18px; color: #ffffff; display: block; margin-bottom: 8px;">TL;DR
+                Conclusion</strong>
+            <p>In version 3.2.0, Welo shifted from passive network monitoring to actively injecting code into the
+                RaterHub DOM. However, invasive features like Screen Recording (Sentry) and Extension monitoring
+                permission have been disabled. RHTS architecture remains fully undetectable and synchronized with Welo's
+                new physical button tracking.</p>
+        </div>
 
-        <!-- Step 3 -->
-        <h2>3. The Code Proof</h2>
-        <p>Here is the exact Sentry configuration block found in <code>content-script/index.js</code>, formatted for readability:</p>
+        <!-- RHTS Announcement -->
+        <div style="text-align: center; margin-bottom: 60px;">
+            <strong style="font-size: 20px; color: #c4b5e3; display: block; margin-bottom: 8px;">RHTS is Now
+                Available</strong>
+            <p style="margin-bottom: 16px;">The background version of RH Toolkit is now live.<br>$2/month subscription
+                on Stripe. 7-day free trial included.</p>
+            <a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb"
+                target="_blank"
+                style="color: #ffffff; background: #1a1a1a; padding: 10px 20px; border-radius: 4px; border: 1px solid var(--color-border); text-decoration: none; display: inline-block; font-size: 15px; font-weight: 600;">Download
+                on Chrome Web Store ↗</a>
+        </div>
+
+        <!-- Section 1: Screen Recording (Sentry Replay) -->
+        <h2>1. Screen Recording (Sentry Replay)</h2>
+        <p>The extension utilizes Sentry Replay, a standard developer tool used to record screen sessions for bug
+            diagnostics. In older versions, there was a 10% chance of recording.</p>
+        <p>In v3.2.0, the developers have added a strict "early return" killswitch specifically for RaterHub. This
+            completely blocks the Sentry initialization script from running on the platform, bringing the recording
+            chance down to 0%.</p>
+
         <div class="code-block-wrapper">
-            <details open>
-                <summary>View content-script/index.js</summary>
+            <details>
+                <summary>View Extension Source Code</summary>
                 <div class="code-block-content">
-                    <pre><span class="token-comment">// Sentry Initialization inside Welo's content-script/index.js</span>
-<span class="token-variable">p</span>.<span class="token-function">init</span>({
-  <span class="token-property">dsn</span>: <span class="token-variable">f</span>, <span class="token-comment">// Points to Welo's self-hosted server: sentry.welocalize.tools</span>
-  <span class="token-property">environment</span>: <span class="token-variable">Ui</span>.<span class="token-property">environment</span>, <span class="token-comment">// "production"</span>
-  <span class="token-property">release</span>: <span class="token-comment">...</span>,
-  <span class="token-property">tracesSampleRate</span>: <span class="token-boolean">1</span>,
-  <span class="token-property">replaysSessionSampleRate</span>: <span class="token-boolean">.1</span>, <span class="token-comment">// 10% of sessions are recorded</span>
-  <span class="token-property">replaysOnErrorSampleRate</span>: <span class="token-boolean">1</span>, <span class="token-comment">// 100% of sessions with a JS error are recorded</span>
-  <span class="token-property">sendDefaultPii</span>: <span class="token-boolean">!1</span>,
-  <span class="token-property">skipBrowserExtensionCheck</span>: <span class="token-boolean">!0</span>,
-  <span class="token-property">integrations</span>: [
-    <span class="token-variable">p</span>.<span class="token-function">browserTracingIntegration</span>(),
-    <span class="token-variable">p</span>.<span class="token-function">replayIntegration</span>({
-      <span class="token-property">maskAllText</span>: <span class="token-boolean">!1</span>, <span class="token-comment">// Page text and task content are NOT masked (!1 means false)</span>
-      <span class="token-property">maskAllInputs</span>: <span class="token-boolean">!0</span>, <span class="token-comment">// Text typed into input fields IS masked (!0 means true)</span>
-      <span class="token-property">blockAllMedia</span>: <span class="token-boolean">!1</span>
-    })
-  ],
-  <span class="token-comment">...</span>
-})</pre>
+                    <pre><span class="token-comment">// Minified check: n() returns false on RaterHub</span>
+<span class="token-keyword">function</span> <span class="token-function">n</span>(){<span class="token-keyword">const</span> <span class="token-variable">f</span>=window.location.hostname;<span class="token-keyword">return</span> <span class="token-function">t</span>().<span class="token-function">some</span>(<span class="token-variable">p</span>=&gt;<span class="token-variable">f</span>.<span class="token-function">includes</span>(<span class="token-variable">p</span>))}
+
+<span class="token-comment">// The Killswitch: "If not allowed (!n()), return and abort"</span>
+<span class="token-keyword">if</span>(window.<span class="token-function">addEventListener</span>(<span class="token-string">"message"</span>, <span class="token-comment">/* ... */</span>),!<span class="token-function">n</span>())<span class="token-keyword">return</span>;
+
+<span class="token-comment">// Function o() that initializes Sentry is never called</span>
+<span class="token-keyword">function</span> <span class="token-function">o</span>(){<span class="token-keyword">const</span> <span class="token-variable">f</span>=Wi.sentryDsn;Promise.<span class="token-function">resolve</span>().<span class="token-function">then</span>(<span class="token-comment">/* ... */</span>)}</pre>
                 </div>
             </details>
         </div>
 
-        <!-- Step 4 -->
-        <h2>4. Configuration Impact</h2>
-        <p>Here is what these configurations mean for the extension:</p>
-        <ul>
-            <li><strong>replaysSessionSampleRate: .1</strong><br>The extension rolls a 10% random chance (1 in 10) on every new session to record your screen interactions.</li>
-            <li><strong>replaysOnErrorSampleRate: 1</strong><br>If any JavaScript error occurs in your browser while rating (even minor, unrelated page errors), the extension immediately triggers a 100% capture of the session and uploads the recording.</li>
-            <li><strong>maskAllText: !1 (false)</strong><br>Because this is set to false, Sentry captures all visible text on the rating page (e.g., task queries, project guidelines, and injected DOM elements from other extensions) in plain text.</li>
-            <li><strong>maskAllInputs: !0 (true)</strong><br>Any text you manually type into input fields, textareas, or text-boxes is masked (hidden) and will not be visible in the recording.</li>
-            <li><strong>Self-Hosted Telemetry Server</strong><br>The destination URL is <code>sentry.welocalize.tools</code>. This confirms that all recorded telemetry is sent to private servers, rather than Sentry's public cloud.</li>
-        </ul>
+        <span class="verdict verdict-safe">Verdict: Telemetry Disabled (0% chance on RaterHub)</span>
 
-        <!-- Step 5 -->
-        <h2>5. The DOM Injection Risk</h2>
-        <p>Welo's extension does NOT scan your browser for other installed extensions. However, it can still "see" them buttons or anything injected on the screen through Sentry Replay.</p>
-        <ul>
-            <li><strong>Mechanism:</strong> Sentry does not record a video file. Instead, it uses the <code>rrweb</code> library to snapshot the webpage's HTML structure (DOM) and tracks every change using a <code>MutationObserver</code>.</li>
-            <li><strong>Injection Flaw:</strong> If an extension injects custom buttons or timers into the RaterHub webpage, <code>rrweb</code> captures that new HTML code.</li>
-            <li><strong>Risk:</strong> The developer's dashboard reconstructs this HTML into a visual playback. Because <code>maskAllText</code> is <code>false</code>, if you are unlucky enough and someone checks your session, they will clearly see your tools rendered on screen.</li>
-        </ul>
+        <!-- Section 2: Open Tabs Monitoring -->
+        <h2>2. Open Tabs Monitoring</h2>
+        <p>When you finish a task, Welo scans your browser and sends the URLs of <b>all your open tabs</b> directly to
+            their server. </p>
+        <p>In version 3.2.0, they have also added a "bot capability" counter (<code>tabOpened</code>) that logs every
+            time you open a new tab while a task is active.</p>
 
-        <!-- Step 6 -->
-        <h2>6. Continuous Upload Behavior</h2>
-        <p>It is important to understand that Sentry does NOT wait until you finish a task to upload the recording.</p>
-        <ul>
-            <li><strong>Near Real-Time:</strong> Sentry packages your screen activity into small chunks and uploads them continuously in the background (usually every 5 seconds) while you work.</li>
-            <li><strong>Closing the Tab:</strong> If you close the RaterHub tab or navigate away, the extension immediately triggers a final upload (<code>p.flush(500)</code>) to ensure the very last seconds of your session are successfully sent to the server.</li>
-        </ul>
+        <div class="code-block-wrapper">
+            <details>
+                <summary>View Extension Source Code</summary>
+                <div class="code-block-content">
+                    <pre><span class="token-comment">// They now actively count tab openings during a task</span>
+<span class="token-comment">// Found in assets/index-F-XNxVC-.js</span>
+chrome.tabs.onCreated.<span class="token-function">addListener</span>(<span class="token-variable">e</span>=&gt;{<span class="token-variable">a</span>.<span class="token-function">manageEvent</span>({<span class="token-property">action</span>:<span class="token-string">"botCapabilities"</span>,<span class="token-property">type</span>:<span class="token-string">"tabOpened"</span>}).<span class="token-function">catch</span>(<span class="token-variable">t</span>=&gt;{})})
+
+<span class="token-comment">// And still send all open tab URLs on submit</span>
+<span class="token-comment">// Found in assets/index-F-XNxVC-.js</span>
+<span class="token-keyword">let</span> <span class="token-variable">i</span>=[];<span class="token-keyword">try</span>{<span class="token-variable">i</span>=(<span class="token-keyword">await</span> chrome.tabs.<span class="token-function">query</span>({})).<span class="token-function">map</span>(<span class="token-variable">d</span>=&gt;<span class="token-variable">d</span>.url).<span class="token-function">filter</span>(<span class="token-boolean">Boolean</span>)}<span class="token-keyword">catch</span>{}</pre>
+                </div>
+            </details>
+        </div>
+
+        <div class="minimal-warning">
+            <p><strong>Recommendation:</strong> Do not leave personal tabs or any extension settings page open while
+                working.</p>
+        </div>
+
+        <span class="verdict verdict-danger">Verdict: Actively Tracked.</span>
+
+        <!-- Section 3: Other Extension Monitoring -->
+        <h2>3. Other Extension Monitoring</h2>
+        <p>In version 3.2.0, the <code>management</code> permission has been <b>completely removed</b> from the
+            <code>manifest.json</code> file.</p>
+        <p>The extension no longer requests this permission, meaning it has zero ability to see what other extensions
+            you have installed on your browser.</p>
+
+        <span class="verdict verdict-safe">Verdict: NOT tracked. (Permission Removed)</span>
+
+        <!-- Section 4: Clipboard & Keyboard Tracking (Copy/Paste) -->
+        <h2>4. Clipboard & Keyboard Tracking (Copy/Paste)</h2>
+        <p>Inside the extension's source code, the developers hardcoded a "feature flag" object that controls where the
+            copy/paste and keyboard tracking is allowed to run. Because RaterHub is set to false, the extension
+            immediately kills the clipboard and keyboard monitors before they ever start.</p>
+
+        <div class="code-block-wrapper">
+            <details>
+                <summary>View Extension Source Code</summary>
+                <div class="code-block-content">
+                    <pre><span class="token-comment">// The feature flags allowing tracking per platform</span>
+<span class="token-comment">// (Notice raterhub is explicitly set to false/!1)</span>
+<span class="token-keyword">const</span> <span class="token-variable">y_</span>={<span class="token-property">ewoq</span>:<span class="token-boolean">!0</span>,<span class="token-property">raterhub</span>:<span class="token-boolean">!1</span>,<span class="token-property">heartex</span>:<span class="token-boolean">!1</span>,<span class="token-property">feather</span>:<span class="token-boolean">!1</span>}
+
+<span class="token-comment">// The Killswitch: Aborts listener injection if platform is false</span>
+<span class="token-keyword">function</span> <span class="token-function">d</span>(){
+    <span class="token-keyword">const</span> <span class="token-variable">f</span>=<span class="token-function">r</span>();
+    <span class="token-keyword">if</span>(!<span class="token-variable">f</span>||!<span class="token-function">E_</span>(<span class="token-variable">f</span>))<span class="token-keyword">return</span>; <span class="token-comment">// &lt;-- Immediately dies here on RaterHub</span>
+    
+    <span class="token-comment">// ... Otherwise starts clipboard listeners ...</span>
+    document.<span class="token-function">addEventListener</span>(<span class="token-string">"paste"</span>, <span class="token-comment">/*...*/</span>)
+}</pre>
+                </div>
+            </details>
+        </div>
+
+        <span class="verdict verdict-safe">Verdict: Completely Disabled. 100% Safe.</span>
+
+        <!-- Section 5: Mouse Tracking -->
+        <h2>5. Mouse Tracking</h2>
+        <p>The extension ignores your general mouse movements, clicks, and scrolling speed. The only mouse-tracking code
+            inside the extension is activated exclusively when you use the "Report a Bug" feature to draw a screenshot
+            rectangle.</p>
+
+        <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
+
+        <!-- Section 6: Auto Submit & DOM Monitoring -->
+        <h2>6. Auto Submit & DOM Monitoring</h2>
+        <p>In version 3.2.0, Welo shifted from monitoring invisible network requests to actively injecting listeners
+            into the RaterHub page. They now add an <code>addEventListener("click")</code> to the physical "Submit" and
+            "Cancel" buttons.</p>
+        <p>Additionally, they scrape the Estimated Task Time (AET) directly from the screen
+            (<code>.ewok-estimated-task-weight</code>) to override and verify the official task completion time on their
+            servers.</p>
+
+        <p><b>Is it safe to automate?</b> Yes. Because their new code fails to verify the <code>event.isTrusted</code>
+            property, using a stealth automation tool like RHTS to programmatically click "Submit" perfectly triggers
+            their new physical listener. This makes your automated background clicks completely indistinguishable from a
+            real human clicking the button.</p>
+
+        <div class="code-block-wrapper">
+            <details>
+                <summary>View Extension Source Code</summary>
+                <div class="code-block-content">
+                    <pre><span class="token-comment">// Welo 3.2.0 tracking the exact submit buttons (from background.js)</span>
+<span class="token-keyword">const</span> <span class="token-variable">r</span>=[<span class="token-string">"ewok-task-submit-button"</span>,<span class="token-string">"ewok-task-submit-done-button"</span>]
+
+<span class="token-keyword">for</span>(<span class="token-keyword">const</span> <span class="token-variable">c</span> <span class="token-keyword">of</span> <span class="token-variable">r</span>){
+    <span class="token-keyword">const</span> <span class="token-variable">u</span>=document.<span class="token-function">getElementById</span>(<span class="token-variable">c</span>);
+    
+    <span class="token-comment">// They add a "click" listener. Because they don't verify event.isTrusted,</span>
+    <span class="token-comment">// automated clicks from RHTS trigger this perfectly.</span>
+    <span class="token-variable">u</span>&amp;&amp;<span class="token-variable">u</span>.<span class="token-function">getAttribute</span>(<span class="token-string">"listener"</span>)!==<span class="token-string">"true"</span>&amp;&amp;(<span class="token-variable">u</span>.<span class="token-function">addEventListener</span>(<span class="token-string">"click"</span>,<span class="token-variable">s</span>,{<span class="token-property">capture</span>:<span class="token-boolean">!0</span>}),<span class="token-variable">u</span>.<span class="token-function">setAttribute</span>(<span class="token-string">"listener"</span>,<span class="token-string">"true"</span>))
+}</pre>
+                </div>
+            </details>
+        </div>
+
+        <span class="verdict verdict-safe">Verdict: 100% Safe to Automate.</span>
 
     </div>
 
