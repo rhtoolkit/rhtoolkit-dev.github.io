@@ -380,7 +380,7 @@ chrome.tabs.onCreated.<span class="token-function">addListener</span>(<span clas
         <p>In version 3.3.0, Welo completely removed the injected DOM button listeners introduced in v3.2.0. They have returned to passive background network monitoring via <code>chrome.webRequest.onCompleted</code>.</p>
         <p>Welo detects task completion by listening for the successful HTTP <code>POST</code> response to <code>/evaluation/rater/task/preview*</code>.</p>
 
-        <p><b>Is it safe to automate?</b> Yes. When an automation tool triggers a click on Google's native submit button, the browser naturally issues the standard POST request. Welo's background service worker intercepts this network response and stops the timer in perfect sync. Concerns regarding DOM <code>event.isTrusted</code> checks are completely eliminated.</p>
+        <p><b>Is it safe to automate?</b> Yes. When an automation tool triggers a click on native submit button, the browser naturally issues the standard POST request. Welo's background service worker intercepts this network response and stops the timer in perfect sync. Concerns regarding DOM <code>event.isTrusted</code> checks are completely eliminated.</p>
 
         <div class="code-block-wrapper">
             <details>
