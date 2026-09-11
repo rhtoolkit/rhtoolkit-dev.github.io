@@ -1,441 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welo Security Audit</title>
     <style>
-        :root {
-            --color-bg-main: #141414;
-            --color-text-main: #e2e2e2;
-            --color-text-faded: #888888;
-            --color-border: #2e2e2e;
-            --color-accent: #ffffff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: var(--color-bg-main);
-            color: var(--color-text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-size: 16px;
-            min-height: 100vh;
-            display: flex;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .main-content {
-            flex: 1;
-            min-height: 100vh;
-            padding: 80px 40px;
-            max-width: 850px;
-            margin: 0 auto;
-        }
-
-        .page-title {
-            font-size: 26px;
-            font-weight: 600;
-            color: var(--color-accent);
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
-        }
-
-        .page-subtitle {
-            font-size: 16px;
-            color: var(--color-text-faded);
-            margin-bottom: 50px;
-        }
-
-        h2 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--color-accent);
-            margin-top: 50px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--color-border);
-            padding-bottom: 8px;
-        }
-
-        p {
-            color: #cccccc;
-            margin-bottom: 20px;
-        }
-
-        code {
-            font-family: Consolas, Monaco, 'Courier New', monospace;
-            background-color: #1f1f1f;
-            color: #eeeeee;
-            padding: 3px 6px;
-            border-radius: 4px;
-            border: 1px solid var(--color-border);
-            font-size: 14px;
-        }
-
-        /* ========== MINIMAL ALERTS / VERDICTS ========== */
-        .verdict {
-            font-size: 15px;
-            font-weight: 600;
-            margin-top: 14px;
-            margin-bottom: 30px;
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 4px;
-            border: 1px solid var(--color-border);
-            background: #1a1a1a;
-            color: #aaaaaa;
-        }
-
-        .verdict-safe {
-            color: #6ee7b7;
-            border-color: rgba(110, 231, 183, 0.3);
-            background: rgba(110, 231, 183, 0.05);
-        }
-
-        .verdict-danger {
-            color: #ff8b8b;
-            border-color: rgba(229, 115, 115, 0.3);
-            background: rgba(229, 115, 115, 0.05);
-        }
-
-        .verdict-info {
-            color: #c4b5e3;
-            border-color: rgba(196, 181, 227, 0.3);
-            background: rgba(196, 181, 227, 0.05);
-        }
-
-        .minimal-tldr {
-            border-left: 2px solid var(--color-text-faded);
-            padding-left: 24px;
-            margin-top: 20px;
-            margin-bottom: 50px;
-            padding-top: 4px;
-            padding-bottom: 4px;
-        }
-
-        .minimal-tldr p {
-            margin-bottom: 0;
-            color: #e2e2e2;
-        }
-
-        .minimal-warning {
-            border-left: 2px solid #e57373;
-            padding-left: 24px;
-            margin-top: 24px;
-            margin-bottom: 24px;
-            padding-top: 4px;
-            padding-bottom: 4px;
-        }
-
-        .minimal-warning p {
-            margin-bottom: 0;
-            color: #cccccc;
-        }
-
-        /* ========== CODE BLOCKS ========== */
-        .code-block-wrapper {
-            background: transparent;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .code-block-wrapper details {
-            width: 100%;
-        }
-
-        .code-block-wrapper summary {
-            padding: 14px 20px;
-            background: #1a1a1a;
-            color: var(--color-text-faded);
-            font-size: 14px;
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid transparent;
-            transition: color 0.2s;
-            list-style: none;
-        }
-
-        .code-block-wrapper summary:hover {
-            color: var(--color-accent);
-        }
-
-        .code-block-wrapper summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .code-block-wrapper summary::after {
-            content: 'Show Code ▼';
-            font-size: 12px;
-            color: #666;
-        }
-
-        .code-block-wrapper details[open] summary::after {
-            content: 'Hide Code ▲';
-        }
-
-        .code-block-wrapper details[open] summary {
-            border-bottom-color: var(--color-border);
-        }
-
-        .code-block-content {
-            padding: 24px;
-            background: #0f0f0f;
-            overflow-x: auto;
-        }
-
-        .code-block-content pre {
-            margin: 0;
-            color: #bbbbbb;
-            font-family: Consolas, Monaco, 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        /* SYNTAX HIGHLIGHTING */
-        .token-keyword {
-            color: #d188e6;
-            font-weight: 600;
-        }
-
-        .token-function {
-            color: #7cb8ff;
-        }
-
-        .token-string {
-            color: #a5d487;
-            font-style: italic;
-        }
-
-        .token-comment {
-            color: #7d8c74;
-            font-style: italic;
-        }
-
-        .token-variable {
-            color: #ff8b94;
-        }
-
-        .token-property {
-            color: #f2bc79;
-        }
-
-        .token-boolean {
-            color: #f2bc79;
-            font-weight: 600;
-        }
-
-        a {
-            color: #aaaaaa;
-            text-decoration: underline;
-            text-decoration-color: #555555;
-            text-underline-offset: 4px;
-        }
-
-        a:hover {
-            color: var(--color-accent);
-            text-decoration-color: var(--color-accent);
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--color-border);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
+        :root { --bg:#141414; --text:#e2e2e2; --muted:#888; --border:#2e2e2e; --accent:#fff; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:16px; line-height:1.6; }
+        .main-content { max-width:850px; margin:auto; padding:80px 40px; }
+        .page-title { color:var(--accent); font-size:26px; font-weight:600; margin-bottom:8px; }
+        .alternative { color:var(--muted); text-align:center; margin-bottom:50px; }
+        .alternative a { display:inline-block; color:#fff; border:1px solid var(--border); border-radius:4px; padding:7px 14px; text-decoration:none; }
+        .alternative a:hover { border-color:#888; }
+        .page-subtitle { color:var(--muted); margin-bottom:12px; }
+        h2 { color:var(--accent); font-size:18px; margin:50px 0 12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+        p { color:#ccc; margin-bottom:20px; }
+        code { background:#1f1f1f; border:1px solid var(--border); border-radius:4px; color:#eee; font:14px Consolas,Monaco,monospace; padding:3px 6px; }
+        .verdict { display:inline-block; padding:6px 12px; margin:14px 0 30px; border:1px solid var(--border); border-radius:4px; font-size:15px; font-weight:600; }
+        .safe { color:#6ee7b7; border-color:rgba(110,231,183,.3); background:rgba(110,231,183,.05); }
+        .danger { color:#ff8b8b; border-color:rgba(229,115,115,.3); background:rgba(229,115,115,.05); }
+        .info { color:#c4b5e3; border-color:rgba(196,181,227,.3); background:rgba(196,181,227,.05); }
+        .warning { border-left:2px solid #e57373; padding:4px 0 4px 24px; margin:24px 0; }
+        .warning p { margin:0; }
+        .code-block { border:1px solid var(--border); border-radius:6px; margin:20px 0; overflow:hidden; }
+        .code-block summary { background:#1a1a1a; color:var(--muted); cursor:pointer; padding:14px 20px; font-size:14px; }
+        .code-block summary:hover { color:#fff; }
+        pre { background:#0f0f0f; color:#bbb; font:13px/1.6 Consolas,Monaco,monospace; overflow-x:auto; padding:20px; white-space:pre-wrap; }
+        .source { color:#888; font-size:13px; margin:-8px 0 14px; }
+        a { color:#aaa; }
+        @media (max-width:620px) { .main-content { padding:40px 20px; } }
     </style>
 </head>
-
 <body>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-
-        <div class="page-title">Welo Data Assistant Audit (Version 3.3.0)</div>
-        <div class="page-subtitle">Breakdown of what the extension monitors on RaterHub, verified by direct audit of its source code.</div>
-
-        <!-- Intro -->
-        <p>Welo Data Assistant is a universal tool used across multiple Welocalize partner programs. On RaterHub, invasive tracking features remain strictly disabled, as confirmed by inspecting the minified production source code.</p>
-
-        <!-- TL;DR Conclusion -->
-        <div class="minimal-tldr">
-            <strong style="font-size: 18px; color: #ffffff; display: block; margin-bottom: 8px;">TL;DR Conclusion</strong>
-            <p>In version 3.3.0, Welo completely removed physical DOM button listeners and returned to passive background network interception (<code>webRequest</code>). Aggressive anti-fraud features (clipboard and keystroke tracking) remain hardcoded to false on RaterHub, and extension monitoring is blocked by the browser.</p>
-        </div>
-
-        <!-- Section 1: Screen Recording (Sentry Replay) -->
-        <h2>1. Screen Recording (Sentry Replay)</h2>
-        <p>The extension includes Sentry for diagnostics and error tracking. However, all form input fields on the page are strictly masked (<code>maskAllInputs: true</code>).</p>
-        <p>Because stealth automation tools operate with Zero DOM Injection, no foreign interface elements or modified Google forms are present in any session telemetry.</p>
-
-        <span class="verdict verdict-safe">Verdict: Input Fields Masked (100% Safe)</span>
-
-        <!-- Section 2: Open Tabs Monitoring -->
-        <h2>2. Open Tabs Monitoring</h2>
-        <p>When a task is submitted or updated, Welo queries active browser tabs and sends their URLs along with task metadata. It also tracks a <code>tabOpened</code> counter that records new tabs created while working.</p>
-
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View Extension Source Code</summary>
-                <div class="code-block-content">
-                    <pre><span class="token-comment">// Counts new tabs opened during an active task</span>
-chrome.tabs.onCreated.<span class="token-function">addListener</span>(<span class="token-variable">e</span>=&gt;{<span class="token-variable">a</span>.<span class="token-function">manageEvent</span>({<span class="token-property">action</span>:<span class="token-string">"botCapabilities"</span>,<span class="token-property">type</span>:<span class="token-string">"tabOpened"</span>}).<span class="token-function">catch</span>(<span class="token-variable">t</span>=&gt;{})})
-
-<span class="token-comment">// Queries open tab URLs on task completion</span>
-<span class="token-keyword">let</span> <span class="token-variable">i</span>=[];<span class="token-keyword">try</span>{<span class="token-variable">i</span>=(<span class="token-keyword">await</span> chrome.tabs.<span class="token-function">query</span>({})).<span class="token-function">map</span>(<span class="token-variable">d</span>=&gt;<span class="token-variable">d</span>.url).<span class="token-function">filter</span>(<span class="token-boolean">Boolean</span>)}<span class="token-keyword">catch</span>{}</pre>
-                </div>
-            </details>
-        </div>
-
-        <div class="minimal-warning">
-            <p><strong>Recommendation:</strong> Do not keep unrelated personal tabs or extension management pages open while actively rating tasks.</p>
-        </div>
-
-        <span class="verdict verdict-danger">Verdict: Actively Tracked.</span>
-
-        <!-- Section 3: Other Extension Monitoring -->
-        <h2>3. Other Extension Monitoring</h2>
-        <p>In version 3.3.0, Welo contains a helper function designed to list installed extensions using <code>chrome.management.getAll()</code>.</p>
-        <p>However, the <code>management</code> permission is <b>not declared</b> in their <code>manifest.json</code>. Under Chrome Extension security rules, <code>chrome.management</code> is completely <code>undefined</code> at runtime. The function aborts immediately and returns <code>null</code>.</p>
-
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View Extension Source Code</summary>
-                <div class="code-block-content">
-                    <pre><span class="token-comment">// Found in background.js (v3.3.0)</span>
-<span class="token-keyword">async function</span> <span class="token-function">ME</span>(){
-    <span class="token-keyword">var</span> <span class="token-variable">t</span>;
-    <span class="token-keyword">const</span> <span class="token-variable">e</span>={<span class="token-property">installed_extensions</span>:<span class="token-keyword">null</span>,<span class="token-property">extensions_count</span>:<span class="token-keyword">null</span>,<span class="token-property">extensions_hash</span>:<span class="token-keyword">null</span>};
-    <span class="token-keyword">try</span>{
-        <span class="token-comment">// Aborts immediately because "management" permission is absent in manifest</span>
-        <span class="token-keyword">if</span>(!((<span class="token-variable">t</span>=chrome.management)!=<span class="token-keyword">null</span>&amp;&amp;<span class="token-variable">t</span>.getAll))<span class="token-keyword">return</span> <span class="token-variable">e</span>;
-        
-        <span class="token-keyword">const</span> <span class="token-variable">r</span>=(<span class="token-keyword">await</span> chrome.management.<span class="token-function">getAll</span>()).<span class="token-function">filter</span>(<span class="token-variable">s</span>=&gt;<span class="token-variable">s</span>.type===<span class="token-string">"extension"</span>)...
-    }<span class="token-keyword">catch</span>{}
-    <span class="token-keyword">return</span> <span class="token-variable">e</span>; <span class="token-comment">// Always returns null values</span>
-}</pre>
-                </div>
-            </details>
-        </div>
-
-        <span class="verdict verdict-safe">Verdict: NOT tracked. (Permission Absent in Manifest)</span>
-
-        <!-- Section 4: Clipboard & Keyboard Tracking (Copy/Paste) -->
-        <h2>4. Clipboard & Keyboard Tracking (Copy/Paste)</h2>
-        <p>The aggressive anti-fraud module continues to enforce strict platform feature flags. RaterHub is explicitly hardcoded to <code>false</code> (<code>!1</code>), which immediately terminates the script before any keyboard, copy, or paste listeners are attached.</p>
-
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View Extension Source Code</summary>
-                <div class="code-block-content">
-                    <pre><span class="token-comment">// Platform feature flags in content-script/index.js</span>
-<span class="token-keyword">const</span> <span class="token-variable">we</span>=Object.<span class="token-function">freeze</span>({<span class="token-property">EWOQ</span>:<span class="token-string">"ewoq"</span>,<span class="token-property">RATERHUB</span>:<span class="token-string">"raterhub"</span>,<span class="token-property">HEARTEX</span>:<span class="token-string">"heartex"</span>,<span class="token-property">FEATHER</span>:<span class="token-string">"feather"</span>});
-<span class="token-keyword">const</span> <span class="token-variable">Ey</span>={[<span class="token-variable">we</span>.EWOQ]:<span class="token-boolean">!0</span>,[<span class="token-variable">we</span>.RATERHUB]:<span class="token-boolean">!1</span>,[<span class="token-variable">we</span>.HEARTEX]:<span class="token-boolean">!1</span>,[<span class="token-variable">we</span>.FEATHER]:<span class="token-boolean">!1</span>};
-
-<span class="token-comment">// The Killswitch: Immediately aborts on RaterHub</span>
-<span class="token-keyword">function</span> <span class="token-function">d</span>(){
-    <span class="token-keyword">const</span> <span class="token-variable">f</span>=<span class="token-function">r</span>();
-    <span class="token-keyword">if</span>(!<span class="token-variable">f</span>||!<span class="token-function">Iy</span>(<span class="token-variable">f</span>))<span class="token-keyword">return</span>; <span class="token-comment">// &lt;-- Dies here on RaterHub</span>
-    
-    <span class="token-comment">// Copy/paste and keydown listeners are never initialized</span>
-    document.<span class="token-function">addEventListener</span>(<span class="token-string">"paste"</span>, <span class="token-comment">/* ... */</span>);
-}</pre>
-                </div>
-            </details>
-        </div>
-
-        <span class="verdict verdict-safe">Verdict: Completely Disabled. 100% Safe.</span>
-
-        <!-- Section 5: Mouse Tracking -->
-        <h2>5. Mouse Tracking</h2>
-        <p>The extension does not record mouse movements, cursor coordinates, or scrolling velocity during regular task evaluation.</p>
-
-        <span class="verdict verdict-safe">Verdict: NOT tracked.</span>
-
-        <!-- Section 6: Task Submission & Network Interception -->
-        <h2>6. Task Submission & Network Interception</h2>
-        <p>In version 3.3.0, Welo completely removed the injected DOM button listeners introduced in v3.2.0. They have returned to passive background network monitoring via <code>chrome.webRequest.onCompleted</code>.</p>
-        <p>Welo detects task completion by listening for the successful HTTP <code>POST</code> response to <code>/evaluation/rater/task/preview*</code>.</p>
-
-        <p><b>Is it safe to automate?</b> Yes. When an automation tool triggers a click on native submit button, the browser naturally issues the standard POST request. Welo's background service worker intercepts this network response and stops the timer in perfect sync. Concerns regarding DOM <code>event.isTrusted</code> checks are completely eliminated.</p>
-
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View Extension Source Code</summary>
-                <div class="code-block-content">
-                    <pre><span class="token-comment">// Passive network submission tracking in background.js (v3.3.0)</span>
-<span class="token-keyword">this</span>.fulfillListener = <span class="token-variable">t</span> =&gt; {
-    <span class="token-variable">t</span>.method !== <span class="token-string">"POST"</span> || <span class="token-variable">t</span>.statusCode !== <span class="token-number">200</span> || 
-        <span class="token-keyword">this</span>.<span class="token-function">emitTerminalEvent</span>(<span class="token-string">"fulfill"</span>, <span class="token-keyword">this</span>.currentTabId ?? <span class="token-variable">t</span>.tabId);
-};
-
-chrome.webRequest.onCompleted.<span class="token-function">addListener</span>(
-    <span class="token-keyword">this</span>.fulfillListener,
-    { <span class="token-property">urls</span>: <span class="token-function">Li</span>(<span class="token-string">"/evaluation/rater/task/preview*"</span>) }
-);</pre>
-                </div>
-            </details>
-        </div>
-
-        <span class="verdict verdict-safe">Verdict: 100% Safe to Automate.</span>
-
-        <!-- Section 7: IP Location & Device Fingerprinting -->
-        <h2>7. IP Location & Device Integrity</h2>
-        <p>In version 3.3.0, Welo introduced passive device and network integrity checks. The extension sends a request to a third-party geolocation service (<code>ipwho.is</code>) to log your Internet Service Provider (ISP), country code, and geographic region.</p>
-        <p>Additionally, it creates a persistent device identifier (<code>wda_device_token</code>) stored in local extension storage.</p>
-
-        <div class="code-block-wrapper">
-            <details>
-                <summary>View Extension Source Code</summary>
-                <div class="code-block-content">
-                    <pre><span class="token-comment">// Geolocation and ISP resolution in background.js</span>
-<span class="token-keyword">async function</span> <span class="token-function">NE</span>(){
-    <span class="token-keyword">const</span> <span class="token-variable">e</span>={<span class="token-property">device_ip_isp</span>:<span class="token-keyword">null</span>,<span class="token-property">device_ip_country</span>:<span class="token-keyword">null</span>,<span class="token-property">device_ip_region</span>:<span class="token-keyword">null</span>};
-    <span class="token-keyword">try</span>{
-        <span class="token-keyword">const</span> <span class="token-variable">i</span>=<span class="token-keyword">await</span> <span class="token-function">fetch</span>(<span class="token-string">"https://ipwho.is/"</span>,{<span class="token-property">method</span>:<span class="token-string">"GET"</span>,<span class="token-property">cache</span>:<span class="token-string">"no-store"</span>});
-        <span class="token-keyword">const</span> <span class="token-variable">o</span>=<span class="token-keyword">await</span> <span class="token-variable">i</span>.<span class="token-function">json</span>();
-        <span class="token-keyword">return</span> {
-            <span class="token-property">device_ip_isp</span>: <span class="token-variable">o</span>.connection?.isp || <span class="token-variable">o</span>.org || <span class="token-keyword">null</span>,
-            <span class="token-property">device_ip_country</span>: <span class="token-variable">o</span>.country_code || <span class="token-variable">o</span>.country || <span class="token-keyword">null</span>,
-            <span class="token-property">device_ip_region</span>: <span class="token-variable">o</span>.region || <span class="token-variable">o</span>.regionName || <span class="token-keyword">null</span>
-        };
-    }<span class="token-keyword">catch</span>{ <span class="token-keyword">return</span> <span class="token-variable">e</span>; }
-}</pre>
-                </div>
-            </details>
-        </div>
-
-        <div class="minimal-warning">
-            <p><strong>Note:</strong> Working through unauthorized VPNs, proxies, or from unapproved geographical locations is identifiable via this endpoint.</p>
-        </div>
-
-        <span class="verdict verdict-danger">Verdict: Actively Tracked (Network / Location).</span>
-
+<main class="main-content">
+    <div class="page-title">Welo Data Assistant Audit (Version 3.3.5)</div>
+    <div class="page-subtitle">Review based only on the locally installed extension files.</div>
+    <div class="alternative">
+        <a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">View RHTS</a>
     </div>
 
-</body>
+    <div class="warning">
+        <p><strong>Version note:</strong> Version 3.3.5 has the RaterHub features enabled again, including activity tracking and webpage diagnostics. This audit describes only the installed 3.3.5 files; a future update may change what is active.</p>
+    </div>
 
+    <h2>1. Can Welo see my other browser tabs?</h2>
+    <p><strong>Yes. It can collect the URLs of open tabs when an activity event is sent.</strong> It does not, in the inspected RaterHub path, read the page contents of unrelated tabs.</p>
+    <p>It also counts new tabs opened while an activity event is active.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// event-manager/event-class.js, lines 136-137
+const tabs = await chrome.tabs.query({});
+allUrls = tabs.map(item =&gt; item.url).filter(Boolean);
+
+// event-manager/event-class.js, line 189
+tabs: allUrls,
+
+// event-manager/index.js, lines 954-956
+chrome.tabs.onCreated.addListener((tab) =&gt; {
+  eventManager.manageEvent({ action: "botCapabilities", type: "tabOpened" });
+});</pre>
+        </details>
+    </div>
+
+    <div class="warning">
+        <p><strong>Practical advice:</strong> Use a separate browser profile / separate browser for work. This keeps personal URLs outside the group of tabs that the extension can query.</p>
+    </div>
+
+    <span class="verdict danger">Verdict: Other-tab URLs can be reported</span>
+
+    <h2>2. Can it record my whole screen?</h2>
+    <p><strong>No.</strong> Sentry is used for errors, performance and replay of the RaterHub webpage. It does not automatically record your monitor or other tabs.</p>
+    <p>Normal webpage replay is sampled at 10%. If Sentry captures an error, the separate error-replay setting is 100%. Visible page text may appear in a replay; form inputs are masked.</p>
+    <p>The package contains standard screenshot support, but the active RaterHub flow does not turn it on.</p>
+    <p><a href="Welo_Sentry_Audit_3.3.5.html">Open the dedicated Sentry audit for version 3.3.5 →</a></p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// content-script/index.js, lines 83-98
+// Active Sentry configuration
+tracesSampleRate: 1.0,
+replaysSessionSampleRate: 0.1,
+replaysOnErrorSampleRate: 1.0,
+sendDefaultPii: false,
+Sentry.replayIntegration({
+  maskAllText: false,
+  maskAllInputs: true,
+  blockAllMedia: false,
+});</pre>
+        </details>
+    </div>
+
+    <span class="verdict info">Verdict: No automatic screen recording; RaterHub webpage replay is active</span>
+
+    <h2>3. Does it track my mouse or keyboard?</h2>
+    <p><strong>No general mouse-movement, cursor-coordinate, scrolling-speed or keystroke tracker was found.</strong> RaterHub copy/paste prevention is disabled.</p>
+    <p>There is one narrow mouse listener for the Cancel and Release controls. It sends an internal event; it does not click the control automatically.</p>
+    <p>Sentry Replay may include page interactions in a selected replay, but that is not a continuous mouse or keyboard recorder.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// utils/platform-flags.js, lines 10-12
+export const COPY_PASTE_PREVENTION = {
+  [Platform.RATERHUB]: false,
+};
+
+// background/scripts/raterhub/task-button-script.js, lines 31-45
+document.addEventListener('mousedown', (event) =&gt; {
+  if (event.target.closest('#ewok-task-cancel-button')) {
+    notify('cancelled');
+    return;
+  }
+  if (isReleaseTarget(event.target)) {
+    notify('released');
+  }
+}, true);</pre>
+        </details>
+    </div>
+
+    <span class="verdict safe">Verdict: No general mouse or keyboard tracking found</span>
+
+    <h2>4. Can it list my other installed extensions?</h2>
+    <p><strong>No direct list was found.</strong> The manifest does not request Chrome's <code>management</code> permission, which is normally required to obtain the names, IDs or versions of installed extensions.</p>
+    <p>The source contains a fallback collector for this information. In the installed package, the API is unavailable because the manifest has no <code>management</code> permission, so the collector returns empty values.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// background/device-fingerprint.js, lines 137-141
+const result = {
+  installed_extensions: null,
+  extensions_count: null,
+  extensions_hash: null,
+};
+if (!chrome.management?.getAll) return result;
+const all = await chrome.management.getAll();</pre>
+        </details>
+    </div>
+
+    <div class="code-block">
+        <details>
+            <summary>View manifest.json permissions</summary>
+            <pre>// manifest.json, line 36
+"permissions": [
+  "activeTab", "storage", "tabs", "webRequest", "scripting",
+  "alarms", "cookies", "idle", "webNavigation", "offscreen"
+]
+// There is no "management" permission.</pre>
+        </details>
+    </div>
+
+    <p class="source">manifest.json, line 36: permissions include <code>tabs</code> and <code>webRequest</code>, but not <code>management</code>.</p>
+    <p>That is different from seeing an effect inside RaterHub. If another extension adds a visible button or changes the page DOM, Welo may see the page element or its effect, but it does not learn which extension created it.</p>
+
+    <span class="verdict safe">Verdict: Other-extension listing is unavailable under the current manifest</span>
+
+    <h2>5. Can it identify an auto-submit or workflow helper?</h2>
+    <p><strong>Welo can see that RaterHub completed a task, but it does not identify which tool or extension caused the action.</strong></p>
+    <p>It watches successful RaterHub completion requests such as <code>/preview</code> or <code>/commit</code>. The event does not contain an <code>autoSubmit</code> flag, another extension's ID, click coordinates or a general mouse trace.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// background/scripts/raterhub/raterhub-script.js, lines 220-239
+this.commitListener = (details) =&gt; {
+  if (details.method !== 'POST' || details.statusCode !== 200) return;
+  // ...
+  await this.emitTerminalEvent('fulfill', context.tabId ?? details.tabId);
+};
+
+chrome.webRequest.onCompleted.addListener(this.commitListener, {
+  urls: raterhubWebRequestUrls(RATERHUB_COMMIT_TASK_PATH + '*'),
+});</pre>
+        </details>
+    </div>
+
+    <div class="code-block">
+        <details>
+            <summary>View monitored RaterHub endpoints</summary>
+            <pre>// raterhub-script.js
+chrome.webRequest.onCompleted.addListener(this.fulfillListener, {
+  urls: raterhubWebRequestUrls(`${RATERHUB_PREVIEW_TASK_PATH}*`),
+});
+
+chrome.webRequest.onCompleted.addListener(this.commitListener, {
+  urls: raterhubWebRequestUrls(`${RATERHUB_COMMIT_TASK_PATH}*`),
+});</pre>
+        </details>
+    </div>
+
+    <p class="source">This describes what Welo records. It does not decide whether automation is allowed by RaterHub or by the task provider.</p>
+
+    <span class="verdict info">Verdict: Completion may be observed; helper identity is not identified</span>
+
+    <h2>6. What changed from version 3.3.3?</h2>
+    <p>The important change is that the RaterHub platform is now enabled. Copy/paste prevention remains disabled, and the Welo dashboard remains disabled.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// utils/platform-flags.js, version 3.3.5
+[Platform.RATERHUB]: true,
+
+// Copy/paste prevention remains disabled
+[Platform.RATERHUB]: false,</pre>
+        </details>
+    </div>
+
+    <span class="verdict info">Main change: RaterHub-specific code is enabled again</span>
+
+    <h2>7. Does it collect location or device information?</h2>
+    <p><strong>Yes, in a limited way.</strong> When you are logged in, the extension can contact <code>ipwho.is</code> to receive the ISP, country and region linked to your public IP.</p>
+    <p>This means <code>ipwho.is</code> can see the public IP used for that request. The check can run in the background after login, even before a task is submitted. The inspected RaterHub activity event does not include the IP lookup fields. This check is separate from Sentry and tab URLs.</p>
+    <p>The extension also creates a random device token and stores it locally.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View the relevant source code</summary>
+            <pre>// background.js, lines 46-51
+if (!isUserLoggedIn) return;
+warmUpDeviceFingerprint().catch(() =&gt; {});
+
+// background/device-fingerprint.js
+const DEVICE_TOKEN_KEY = 'wda_device_token';
+const FINGERPRINT_IP_GEO_URL = 'https://ipwho.is/';
+
+const response = await fetch(FINGERPRINT_IP_GEO_URL, {
+  method: 'GET',
+  cache: 'no-store',
+});
+const data = await response.json();
+
+return {
+  device_ip_isp: data.connection?.isp || data.org || null,
+  device_ip_country: data.country_code || data.country || null,
+  device_ip_region: data.region || data.regionName || null,
+};</pre>
+        </details>
+    </div>
+
+    <span class="verdict info">Verdict: IP lookup and local device token are present; IP fields are not in the RaterHub activity payload</span>
+</main>
+</body>
 </html>
