@@ -190,9 +190,9 @@ return {
 
 
     <h2>8. What does the new Check My Answer button do?</h2>
-     It sends your answer and information about the task to Welo, then displays Welo’s reply. Depending on the page, the information sent can include your written comment and selected rating.</p>
-    <p>You cannot submit the task while the check is running. After the reply arrives, Submit may be unlocked or remain blocked, depending on the result. The button does not edit your answer or submit the task for you.</p>
-    <p>The code shows this behavior. It does not tell us why Welo introduced the button or whether using it affects your score.</p>
+    <p>When you click this button, the extension sends your answer and task details to Welo. It then shows the result Welo sends back. Your comment and chosen rating can be included in what is sent.</p>
+    <p>While you wait, you cannot submit the task. Depending on the result, Submit may stay blocked. The button does not change your answer or hand in the task for you.</p>
+    <p>This is what the code confirms. It does not show how Welo decides the result.</p>
     <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — content-script/raterhub-lint-check.js, lines 604-608
 	button.addEventListener('click', async () =&gt; {
 		const taskId = getTaskId();
