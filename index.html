@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="RaterHub-only audit of Welo Data Assistant 3.4.1, with version comparisons and source-code evidence."><title>Welo Data Assistant Audit — 3.4.1</title><style>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welo Security Audit</title>
+    <style>
         :root { --bg:#141414; --text:#e2e2e2; --muted:#888; --border:#2e2e2e; --accent:#fff; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:16px; line-height:1.6; }
@@ -25,203 +30,220 @@
         .source { color:#888; font-size:13px; margin:-8px 0 14px; }
         a { color:#aaa; }
         @media (max-width:620px) { .main-content { padding:40px 20px; } }
-    
- h1.page-title {line-height:1.3} nav {display:flex;flex-wrap:wrap;gap:10px 20px;margin:24px 0}
- a {color:#c6c6c6;text-underline-offset:3px} a:focus-visible,summary:focus-visible {outline:2px solid #6ee7b7;outline-offset:4px}
- h3 {font-size:16px;margin:24px 0 12px} ul,ol {margin:0 0 24px 24px;color:#ccc} li {margin:8px 0}
- .table-wrap {overflow-x:auto;margin:20px 0} table {border-collapse:collapse;width:100%;font-size:14px}
- th,td {text-align:left;border:1px solid var(--border);padding:12px;vertical-align:top} th {color:#fff;background:#1f1f1f}
- .source {overflow-wrap:anywhere;margin:12px 0} code {overflow-wrap:anywhere} pre {white-space:pre;tab-size:2}
- .badge {font-size:12px;color:#6ee7b7;text-transform:uppercase;letter-spacing:.08em} section {scroll-margin-top:24px}
- .method {margin-top:50px;padding-top:24px;border-top:1px solid var(--border);font-size:14px}
- .code-line {display:block;min-height:1.6em} .code-line:target {background:#30382d;color:white}
- .line-number {display:inline-block;width:4em;color:#888;text-decoration:none;user-select:none}
- </style></head><body><main class="main-content"><h1 class="page-title">Welo Data Assistant Audit — 3.4.1</h1><p class="page-subtitle">RaterHub · Extension 3.4.1 · Reviewed September 23, 2026</p><nav aria-label="Audit pages"><a href="index.html">Main audit</a><a href="sentry.html">Sentry audit</a></nav><div class="warning"><p><strong>Updated from 3.3.5:</strong> 3.4.1 adds answer checking, conditional Submit blocking, an automatic Factuality Assist lookup and more persistent email capture. Sentry settings changed in 3.4.0; its SDK changes again in 3.4.1.</p></div><div class="alternative"><a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">View RHTS</a></div>
-<nav aria-label="Topics"><a href="#check">Check My Answer</a><a href="#submit">Submit blocking</a><a href="#assist">Automatic assistant</a><a href="#email">Email</a><a href="#tabs">Other tabs</a><a href="#replay">Replay</a><a href="#helpers">Helpers</a><a href="#device">Device data</a></nav><section id="check"><h2>1. What does Check My Answer actually do?</h2><p><strong>It requests a review of your answer before you submit the task.</strong> In the normal UI flow, clicking the button reads the selected rating and task data, sends them to Welo, then displays the server’s findings. It does not rewrite the answer or automatically submit the task.</p><p>The button is enabled for recognized Factuality, Response Helpfulness and Side By Side layouts. It is not guaranteed to appear on every task. No periodic upload of the typed comment, or mandatory check on every native Submit, was found in these UI paths.</p><div class="code-block"><details><summary>Proof: what the Factuality click reads</summary><pre>	button.addEventListener('click', async () =&gt; {
-		const taskId = getTaskId();
-		const raterId = await getRaterId();
-		const commentText = textarea.value.trim();
-		const taskContext = getTaskContext(textarea);</pre></details></div><p class="source">3.4.1 · content-script/raterhub-lint-check.js · lines 604–608 · <a href="evidence.html#click">Numbered evidence</a></p><div class="table-wrap"><table><caption>Data sent depends on the task type</caption><thead><tr><th>Task</th><th>Request content</th></tr></thead><tbody><tr><td>Factuality</td><td>Task ID, rater ID, comment, query, response/highlight, selected label, item ID and an embedded image if extracted</td></tr><tr><td>Response Helpfulness</td><td>Task/rater IDs, prompt, response A/B HTML, ratings and flipped state; no comment_text field in this format</td></tr><tr><td>Side By Side</td><td>Task/rater IDs, query, index-0 result URL/title/snippet for each side, Needs Met ratings and flipped state; no comment_text field in this format</td></tr></tbody></table></div><div class="code-block"><details><summary>Proof: all three request formats</summary><pre>
-  let requestBody;
-  switch (message.lintType) {
-    case LINT_CHECK_TYPE.HELPFULNESS:
-      requestBody = {
-        lint_type: LINT_CHECK_TYPE.HELPFULNESS,
-        task_id: taskId,
-        rater_id: raterId,
-        prompt: message.prompt ?? '',
-        response_a: message.responseA ?? '',
-        helpfulness_a: message.helpfulnessA,
-        response_b: message.responseB ?? '',
-        helpfulness_b: message.helpfulnessB,
-        flipped: message.flipped === true,
-      };
-      break;
-    case LINT_CHECK_TYPE.SIDE_BY_SIDE:
-      requestBody = {
-        lint_type: LINT_CHECK_TYPE.SIDE_BY_SIDE,
-        task_id: taskId,
-        rater_id: raterId,
-        query: message.query ?? '',
-        left_url: message.leftUrl ?? '',
-        left_title_html: message.leftTitleHtml ?? '',
-        left_snippet_html: message.leftSnippetHtml ?? '',
-        needs_met_left: message.needsMetLeft,
-        right_url: message.rightUrl ?? '',
-        right_title_html: message.rightTitleHtml ?? '',
-        right_snippet_html: message.rightSnippetHtml ?? '',
-        needs_met_right: message.needsMetRight,
-        flipped: message.flipped === true,
-      };
-      break;
-    default:
-      requestBody = {
-        task_id: taskId,
-        rater_id: raterId,
-        comment_text: commentText ?? '',
-        task_context: {
-          query: taskContext?.query ?? '',
-          ai_response: taskContext?.ai_response ?? '',
-          highlighted_text: taskContext?.highlighted_text ?? '',
-          label: taskContext?.label ?? '',
-          item_id: taskContext?.item_id ?? taskId,
-          ...(taskContext?.image ? { image: taskContext.image } : {}),
-        },
-      };
+    </style>
+</head>
+<body>
+<main class="main-content">
+    <div class="page-title">Welo Data Assistant Audit (Version 3.3.5)</div>
+    <div class="page-subtitle">Review based only on the locally installed extension files.</div>
+    <div class="alternative">
+        <a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">View RHTS</a>
+    </div>
+
+    <div class="warning">
+        <p><strong>Version note:</strong> Version 3.3.5 has the RaterHub features enabled again, including activity tracking and webpage diagnostics. This audit describes only the installed 3.3.5 files; a future update may change what is active.</p>
+    </div>
+
+    <h2>1. Can Welo see my other browser tabs?</h2>
+    <p><strong>Yes. It can collect the URLs of open tabs when an activity event is sent.</strong> It does not, in the inspected RaterHub path, read the page contents of unrelated tabs.</p>
+    <p>It also counts new tabs opened while an activity event is active.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// event-manager/event-class.js, lines 136-137
+const tabs = await chrome.tabs.query({});
+allUrls = tabs.map(item =&gt; item.url).filter(Boolean);
+
+// event-manager/event-class.js, line 189
+tabs: allUrls,
+
+// event-manager/index.js, lines 954-956
+chrome.tabs.onCreated.addListener((tab) =&gt; {
+  eventManager.manageEvent({ action: "botCapabilities", type: "tabOpened" });
+});</pre>
+        </details>
+    </div>
+
+    <div class="warning">
+        <p><strong>Practical advice:</strong> Use a separate browser profile / separate browser for work. This keeps personal URLs outside the group of tabs that the extension can query.</p>
+    </div>
+
+    <span class="verdict danger">Verdict: Other-tab URLs can be reported</span>
+
+    <h2>2. Can it record my whole screen?</h2>
+    <p><strong>No.</strong> Sentry is used for errors, performance and replay of the RaterHub webpage. It does not automatically record your monitor or other tabs.</p>
+    <p>Normal webpage replay is sampled at 10%. If Sentry captures an error, the separate error-replay setting is 100%. Visible page text may appear in a replay; form inputs are masked.</p>
+    <p>The package contains standard screenshot support, but the active RaterHub flow does not turn it on.</p>
+    <p><a href="Welo_Sentry_Audit_3.3.5.html">Open the dedicated Sentry audit for version 3.3.5 →</a></p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// content-script/index.js, lines 83-98
+// Active Sentry configuration
+tracesSampleRate: 1.0,
+replaysSessionSampleRate: 0.1,
+replaysOnErrorSampleRate: 1.0,
+sendDefaultPii: false,
+Sentry.replayIntegration({
+  maskAllText: false,
+  maskAllInputs: true,
+  blockAllMedia: false,
+});</pre>
+        </details>
+    </div>
+
+    <span class="verdict info">Verdict: No automatic screen recording; RaterHub webpage replay is active</span>
+
+    <h2>3. Does it track my mouse or keyboard?</h2>
+    <p><strong>No general mouse-movement, cursor-coordinate, scrolling-speed or keystroke tracker was found.</strong> RaterHub copy/paste prevention is disabled.</p>
+    <p>There is one narrow mouse listener for the Cancel and Release controls. It sends an internal event; it does not click the control automatically.</p>
+    <p>Sentry Replay may include page interactions in a selected replay, but that is not a continuous mouse or keyboard recorder.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// utils/platform-flags.js, lines 10-12
+export const COPY_PASTE_PREVENTION = {
+  [Platform.RATERHUB]: false,
+};
+
+// background/scripts/raterhub/task-button-script.js, lines 31-45
+document.addEventListener('mousedown', (event) =&gt; {
+  if (event.target.closest('#ewok-task-cancel-button')) {
+    notify('cancelled');
+    return;
   }
+  if (isReleaseTarget(event.target)) {
+    notify('released');
+  }
+}, true);</pre>
+        </details>
+    </div>
 
-  const response = await lintCheck(requestBody);</pre></details></div><p class="source">3.4.1 · event-manager/index.js · lines 83–132 · <a href="evidence.html#payload">Numbered evidence</a></p><p>Production endpoint: <code>https://midgard.welodata.ai/api/user-activity/lint-check</code>, through the existing authenticated HTTP client. A source comment mentions Apollo, but the client does not establish the model, provider, backend processing or retention.</p><div class="code-block"><details><summary>Proof: the POST request</summary><pre>export async function lintCheck(reqBody) {
-  return post(&quot;/user-activity/lint-check&quot;, reqBody);
-}</pre></details></div><p class="source">3.4.1 · api/user-activity.js · lines 140–142 · <a href="evidence.html#endpoint">Numbered evidence</a></p><div class="warning"><p><strong>Input masking in Sentry does not protect this separate request.</strong> The Factuality comment is explicitly included as <code>comment_text</code>.</p></div></section><section id="submit"><h2>2. Why does it block Submit?</h2><p>After local checks pass, the click handler blocks Submit while the request is pending. It then keeps the block when a triggered flag other than <code>wrong_label</code> has severity <code>blocking</code>, or when <code>is_mvq</code> and <code>wrong_label</code> are both triggered.</p><div class="code-block"><details><summary>Proof: exact blocking conditions</summary><pre>function hasTriggeredFlag(data, name) {
-	return Array.isArray(data?.flags)
-		? data.flags.some((flag) =&gt; flag.name === name &amp;&amp; flag.triggered)
-		: false;
-}
+    <span class="verdict safe">Verdict: No general mouse or keyboard tracking found</span>
 
-function hasMvqLabelMismatch(data) {
-	return hasTriggeredFlag(data, 'is_mvq') &amp;&amp; hasTriggeredFlag(data, 'wrong_label');
-}
+    <h2>4. Can it list my other installed extensions?</h2>
+    <p><strong>No direct list was found.</strong> The manifest does not request Chrome's <code>management</code> permission, which is normally required to obtain the names, IDs or versions of installed extensions.</p>
+    <p>The source contains a fallback collector for this information. In the installed package, the API is unavailable because the manifest has no <code>management</code> permission, so the collector returns empty values.</p>
 
-function hasOtherBlockingIssues(data) {
-	return Array.isArray(data?.flags)
-		? data.flags.some(
-				(flag) =&gt;
-					flag.name !== 'wrong_label' &amp;&amp;
-					flag.triggered &amp;&amp;
-					flag.severity === 'blocking',
-			)
-		: false;
-}</pre></details></div><p class="source">3.4.1 · content-script/raterhub-lint-check.js · lines 575–594 · <a href="evidence.html#blocking-flags">Numbered evidence</a></p><div class="code-block"><details><summary>Proof: block, result, override and error handling</summary><pre>		button.disabled = true;
-		button.textContent = 'Checking...';
-		blockSubmit();
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// background/device-fingerprint.js, lines 137-141
+const result = {
+  installed_extensions: null,
+  extensions_count: null,
+  extensions_hash: null,
+};
+if (!chrome.management?.getAll) return result;
+const all = await chrome.management.getAll();</pre>
+        </details>
+    </div>
 
-		try {
-			const result = await runLintCheck(taskId, raterId, commentText, taskContext);
-			if (result?.ok &amp;&amp; result?.data) {
-				const mvqLabelMismatch = hasMvqLabelMismatch(result.data);
-				const hasBlockingIssues = hasOtherBlockingIssues(result.data);
-				showLintResultsPanel(result.data, {
-					onOverride: () =&gt; {
-						if (!hasBlockingIssues) {
-							unblockSubmit();
-						}
-					},
-				});
-				if (!hasBlockingIssues &amp;&amp; !mvqLabelMismatch) {
-					unblockSubmit();
-				}
-			} else {
-				if (result?.ok === false &amp;&amp; result?.error) {
-					showPageFlash(result.error, 'error');
-				}
-				unblockSubmit();
-			}
-		} catch {
-			showPageFlash('Comment lint check failed. Please try again.', 'error');
-			unblockSubmit();
-		} finally {
-			button.disabled = false;
-			button.textContent = CHECK_BUTTON_LABEL;</pre></details></div><p class="source">3.4.1 · content-script/raterhub-lint-check.js · lines 625–655 · <a href="evidence.html#blocking-result">Numbered evidence</a></p><p><strong>Override and submit only unlocks in this callback.</strong> It does not call the native Submit action, and no separate override-recording POST was found here. An error response or caught exception unlocks; a request that never settles can leave the block in place.</p><p>The intended review-before-submission purpose is an inference from this behavior. The code does not establish penalties or changes to a rater’s score.</p><details><summary>Technical limitations found</summary><ul><li>Unlocking enables the two controls without restoring their previous disabled state; confirmed with simulated buttons.</li><li>Editing the answer does not invalidate an outstanding result; an older result may affect the current answer.</li><li>Closing the results panel does not itself unlock Submit.</li><li>The new handler references an unimported <code>showFlashMessage</code> in error branches; an isolated test produced a ReferenceError, caught by the outer listener.</li><li>The background handler does not validate the supplied identity against the cache or require a RaterHub sender URL. A simulated call confirms this missing check; no live exploitation was performed. The normal click flow is not a security guarantee that every possible request requires a human click.</li></ul></details></section><section id="assist"><h2>3. What happens without clicking Check My Answer?</h2><p><strong>A separate Factuality Assist lookup can run automatically.</strong> On a recognized task preview, after login and privacy-acceptance checks, it requests claim decomposition by task ID. This GET does not upload the comment or task body in its request body.</p><div class="code-block"><details><summary>Proof: automatic lookup endpoint</summary><pre>async function displayClaimDecomposition(tabId, taskId) {
-	if (!taskId) return;
+    <div class="code-block">
+        <details>
+            <summary>View manifest.json permissions</summary>
+            <pre>// manifest.json, line 36
+"permissions": [
+  "activeTab", "storage", "tabs", "webRequest", "scripting",
+  "alarms", "cookies", "idle", "webNavigation", "offscreen"
+]
+// There is no "management" permission.</pre>
+        </details>
+    </div>
 
-	const response = await get(
-		`/raterhub/llm-task-data/${encodeURIComponent(taskId)}/claim-decomposition`,
-		{ silent: true },
-	);
-	const result = response?.data;
-	if (result?.flow !== 'claim_decomposition' || !Array.isArray(result.subclaims)) {
-		return;
-	}
+    <p class="source">manifest.json, line 36: permissions include <code>tabs</code> and <code>webRequest</code>, but not <code>management</code>.</p>
+    <p>That is different from seeing an effect inside RaterHub. If another extension adds a visible button or changes the page DOM, Welo may see the page element or its effect, but it does not learn which extension created it.</p>
 
-	await chrome.tabs.sendMessage(tabId, {
-		action: 'showRaterhubClaimDecomposition',
-		result,
-	}).catch(() =&gt; {});
-}
-</pre></details></div><p class="source">3.4.1 · background/scripts/raterhub/index.js · lines 54–71 · <a href="evidence.html#assist-request">Numbered evidence</a></p><div class="code-block"><details><summary>Proof: login, acceptance and preview conditions</summary><pre>		const userIsLoggedIn = await isLoggedIn();
-		if (!userIsLoggedIn) return;
-		const userHasAcceptedPrivacyNotice = await hasAcceptedPrivacyNotice();
-		if (!userHasAcceptedPrivacyNotice) return;
+    <span class="verdict safe">Verdict: Other-extension listing is unavailable under the current manifest</span>
 
-		if (isRaterhubPreviewTaskPageUrl(tab.url)) {
-			void displayClaimDecomposition(tabId, taskId);
-		}</pre></details></div><p class="source">3.4.1 · background/scripts/raterhub/index.js · lines 94–101 · <a href="evidence.html#assist-gates">Numbered evidence</a></p><p>If the response supplies usable subclaims with the expected flow, the sidebar can display claims, sources and temporal/Wayback suggestions. Source links require interaction; no automatic rewriting of ratings or comments was found. The client does not reveal how the server obtained its task information.</p></section><section id="email"><h2>4. Does the update collect my email differently?</h2><p><strong>Yes: capture is more persistent.</strong> New navigation listeners schedule injections immediately and after 2, 5, 10 and 20 seconds, targeting all frames. The capture script polls once per second, observes DOM changes and has a 90-second timeout per instance. It caches the email as <code>platformUserId_raterhub</code> and sends an internal <code>mail</code> message when changed.</p><div class="code-block"><details><summary>Proof: retries and navigation listeners</summary><pre>const RATERHUB_CAPTURE_DELAYS_MS = [0, 2000, 5000, 10000, 20000];
+    <h2>5. Can it identify an auto-submit or workflow helper?</h2>
+    <p><strong>Welo can see that RaterHub completed a task, but it does not identify which tool or extension caused the action.</strong></p>
+    <p>It watches successful RaterHub completion requests such as <code>/preview</code> or <code>/commit</code>. The event does not contain an <code>autoSubmit</code> flag, another extension's ID, click coordinates or a general mouse trace.</p>
 
-function injectRaterhubPlatformUserIdCapture(tabId) {
-	chrome.scripting.executeScript({
-		target: { tabId, allFrames: true },
-		func: raterhubCapturePlatformUserIdScript,
-	}).catch(() =&gt; {});
-}
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// background/scripts/raterhub/raterhub-script.js, lines 220-239
+this.commitListener = (details) =&gt; {
+  if (details.method !== 'POST' || details.statusCode !== 200) return;
+  // ...
+  await this.emitTerminalEvent('fulfill', context.tabId ?? details.tabId);
+};
 
-export function scheduleRaterhubPlatformUserIdCapture(tabId) {
-	RATERHUB_CAPTURE_DELAYS_MS.forEach((delay) =&gt; {
-		setTimeout(() =&gt; injectRaterhubPlatformUserIdCapture(tabId), delay);
-	});
-}
+chrome.webRequest.onCompleted.addListener(this.commitListener, {
+  urls: raterhubWebRequestUrls(RATERHUB_COMMIT_TASK_PATH + '*'),
+});</pre>
+        </details>
+    </div>
 
-export function initRaterhubListeners() {
-	const onRaterhubNavigation = (details) =&gt; {
-		if (details.frameId !== 0) {
-			return;
-		}
-		scheduleRaterhubPlatformUserIdCapture(details.tabId);
-	};
+    <div class="code-block">
+        <details>
+            <summary>View monitored RaterHub endpoints</summary>
+            <pre>// raterhub-script.js
+chrome.webRequest.onCompleted.addListener(this.fulfillListener, {
+  urls: raterhubWebRequestUrls(`${RATERHUB_PREVIEW_TASK_PATH}*`),
+});
 
-	chrome.webNavigation.onCompleted.addListener(onRaterhubNavigation, {
-		url: [{ hostSuffix: 'raterhub.com' }],
-	});
-	chrome.webNavigation.onHistoryStateUpdated.addListener(onRaterhubNavigation, {
-		url: [{ hostSuffix: 'raterhub.com' }],
-	});
-}</pre></details></div><p class="source">3.4.1 · background/scripts/raterhub/index.js · lines 23–52 · <a href="evidence.html#email-schedule">Numbered evidence</a></p><p>These new local-capture listeners do not require login or privacy acceptance. Email-reading paths already existed; the change broadens their persistence and coverage. Local capture and an internal message do not establish immediate server transmission without login. The cached identity can be used by answer checking and existing activity/Sentry context.</p></section><section id="tabs"><h2>5. Can it see other tabs or track task completion?</h2><p><strong>It can include open-tab URLs in activity events.</strong> That behavior is unchanged in 3.4.1. It does not prove that unrelated tabs’ page contents are read in the inspected RaterHub path.</p><div class="code-block"><details><summary>View extension source code</summary><pre>		let allUrls = [];
-		try {
-			const tabs = await chrome.tabs.query({});
-			allUrls = tabs.map(item =&gt; item.url).filter(Boolean);
-		} catch {}
-		let activeSeconds;</pre></details></div><p class="source">3.4.1 · event-manager/event-class.js · lines 134–139 · <a href="evidence.html#tab-urls">Numbered evidence</a></p><div class="code-block"><details><summary>View extension source code</summary><pre>			const reqBody = {
-				externalReferenceId: this.externalReferenceId,
-				action: this.action,
-				externalPlatform: this.externalPlatform,
-				eventStartedAt: this.eventStartedAt,
-				eventFinishedAt: this.eventFinishedAt,
-				timezone: timezone,
-				hyperlinkClicked: this.hyperlinkClicked,
-				tabOpened: this.tabOpened,
-				platformUserId: await this.getPlatformUserId(),
-				taskDetails: this.taskDetails,
-				tabs: allUrls,
-				...(deviceFingerprint ? { deviceFingerprint } : {}),
-				...(viewportMetrics ? { viewportMetrics } : {}),
-			};
-			// Feather is timer-based, so send the real active (pause-adjusted)</pre></details></div><p class="source">3.4.1 · event-manager/event-class.js · lines 178–193 · <a href="evidence.html#activity-payload">Numbered evidence</a></p><p>Existing listeners observe successful task completion requests and Cancel/Release actions. Some RaterHub terminal-event timing is synthesized from the estimated task duration; these timestamps should not be presented as proof of actual human working time. The existing cross-platform tab restriction can also affect RaterHub tabs.</p></section><section id="replay"><h2>6. Does it record my screen or typing?</h2><p><strong>The inspected active RaterHub flow does not record the whole monitor.</strong> Sentry Replay reconstructs the webpage and can include page interactions. Production session sampling is 10%, additional error-triggered sampling is 0%, visible text has no global masking, inputs are masked, and media is blocked. No additional general keystroke logger was found in the reviewed RaterHub code; that does not make replay interaction-free.</p><p>RaterHub copy/paste prevention remains disabled. A returned <code>is_copy_paste</code> lint flag is a server finding, not proof of a new clipboard listener or identification of another extension.</p><p><a href="sentry.html">Read the updated Sentry audit and its code evidence →</a></p></section><section id="helpers"><h2>7. Can it identify my other extensions or auto-submit helper?</h2><p>No explicit helper ID or auto-submit attribution was found in the inspected RaterHub event. It can observe task completion and changes to the page, which is different from proving which extension caused them.</p><p>The manifest still lacks <code>management</code>. The extension-inventory collector returns empty values when that API is unavailable. This conclusion is limited to the distributed client; it does not rule out server-side inferences.</p></section><section id="device"><h2>8. What about location and device information?</h2><p>The existing login-triggered warmup can contact <code>ipwho.is</code> for IP-related location/ISP data and cache a device token. The package also contains broader local fingerprint collection, including offscreen/browser signals; describing it only as an IP lookup would be incomplete.</p><p><strong>Collection and transmission are separate questions:</strong> the unchanged normal activity-event path excludes fingerprint and viewport fields for RaterHub. This does not prove that every possible backend or telemetry path lacks identity data.</p><div class="code-block"><details><summary>Proof: normal activity fingerprint gate</summary><pre>		const timezone = await getBrowserTimezone();
-		// Device fingerprint and viewport metrics are Feather-only signals; skip the
-		// (offscreen/canvas/WebGL) collection work entirely for the other platforms.
-		const isFeather = this.externalPlatform === constants.Platform.FEATHER;
-		const [deviceFingerprint, viewportMetrics] = isFeather
-			? await Promise.all([
-				getDeviceFingerprint(),
-				collectViewportMetrics(this.tabId),
-			])
-			: [null, null];
-		if (this.externalReferenceId &amp;&amp; this.externalPlatform &amp;&amp; this.action &amp;&amp; this.eventFinishedAt &amp;&amp; this.eventStartedAt) {</pre></details></div><p class="source">3.4.1 · event-manager/event-class.js · lines 167–177 · <a href="evidence.html#fingerprint-gate">Numbered evidence</a></p></section><footer class="method"><p>Extension ID: <code>oceohhnabfcnjfcpppaegdfecladagcc</code>. Scope: RaterHub and shared components that affect it. Static review and isolated tests of distributed client code; no real tasks submitted or production endpoints called. Server decisions, retention, training use and consequences for raters are not established by this audit.</p><p><a href="https://github.com/rhtoolkit/rhtoolkit-dev.github.io">Audit repository</a> · <a href="evidence.html#method">Method and provenance</a></p></footer></main></body></html>
+chrome.webRequest.onCompleted.addListener(this.commitListener, {
+  urls: raterhubWebRequestUrls(`${RATERHUB_COMMIT_TASK_PATH}*`),
+});</pre>
+        </details>
+    </div>
+
+    <p class="source">This describes what Welo records. It does not decide whether automation is allowed by RaterHub or by the task provider.</p>
+
+    <span class="verdict info">Verdict: Completion may be observed; helper identity is not identified</span>
+
+    <h2>6. What changed from version 3.3.3?</h2>
+    <p>The important change is that the RaterHub platform is now enabled. Copy/paste prevention remains disabled, and the Welo dashboard remains disabled.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// utils/platform-flags.js, version 3.3.5
+[Platform.RATERHUB]: true,
+
+// Copy/paste prevention remains disabled
+[Platform.RATERHUB]: false,</pre>
+        </details>
+    </div>
+
+    <span class="verdict info">Main change: RaterHub-specific code is enabled again</span>
+
+    <h2>7. Does it collect location or device information?</h2>
+    <p><strong>Yes, in a limited way.</strong> When you are logged in, the extension can contact <code>ipwho.is</code> to receive the ISP, country and region linked to your public IP.</p>
+    <p>This means <code>ipwho.is</code> can see the public IP used for that request. The check can run in the background after login, even before a task is submitted. The inspected RaterHub activity event does not include the IP lookup fields. This check is separate from Sentry and tab URLs.</p>
+    <p>The extension also creates a random device token and stores it locally.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View the relevant source code</summary>
+            <pre>// background.js, lines 46-51
+if (!isUserLoggedIn) return;
+warmUpDeviceFingerprint().catch(() =&gt; {});
+
+// background/device-fingerprint.js
+const DEVICE_TOKEN_KEY = 'wda_device_token';
+const FINGERPRINT_IP_GEO_URL = 'https://ipwho.is/';
+
+const response = await fetch(FINGERPRINT_IP_GEO_URL, {
+  method: 'GET',
+  cache: 'no-store',
+});
+const data = await response.json();
+
+return {
+  device_ip_isp: data.connection?.isp || data.org || null,
+  device_ip_country: data.country_code || data.country || null,
+  device_ip_region: data.region || data.regionName || null,
+};</pre>
+        </details>
+    </div>
+
+    <span class="verdict info">Verdict: IP lookup and local device token are present; IP fields are not in the RaterHub activity payload</span>
+</main>
+</body>
+</html>
