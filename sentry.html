@@ -30,17 +30,17 @@
 </head>
 <body>
 <main class="main-content">
-    <div class="page-title">Welo Sentry Audit (Version 3.3.5)</div>
+    <div class="page-title">Welo Sentry Audit (Version 3.4.1)</div>
     <div class="page-subtitle">What Sentry does while you use RaterHub.</div>
 
-    <p><a href="Welo_Security_Audit_3.3.5.html">← Back to the main security audit</a></p>
+    <p><a href="index.html">← Back to the main security audit</a></p>
 
     <h2>1. What is Sentry?</h2>
     <p>Sentry is a standard tool developers use to find errors and performance problems. In this extension, it sends diagnostic information about the RaterHub page to the Welo Sentry server. Its presence alone does not mean that the screen is being recorded.</p>
     <p>For this audit, Sentry has three relevant functions:</p>
     <ul style="color:#ccc;margin:0 0 24px 24px;">
         <li>report errors;</li>
-        <li>measure how the page performs;</li>
+        <li>provide performance instrumentation, with trace sampling now set to zero;</li>
         <li>save a replay of the RaterHub page for some sessions.</li>
     </ul>
 
@@ -49,33 +49,54 @@
     </div>
 
     <h2>2. What is active on RaterHub?</h2>
-    <p>For normal production sessions, about 10 out of 100 may receive a replay of the RaterHub page. Separately, when Sentry captures an error, the code is configured to keep the replay for that error case at a 100% sample rate. Neither setting records your monitor or other tabs.</p>
-    <p>Text that is visible on the RaterHub page may appear in the replay. Text typed into form fields is masked.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>View Extension Source Code</summary>
-            <pre>// content-script/index.js
-replaysSessionSampleRate: 0.1,
-replaysOnErrorSampleRate: 1.0,
-Sentry.replayIntegration({
-  maskAllText: false,
-  maskAllInputs: true,
-  blockAllMedia: false,
-});</pre>
-        </details>
-    </div>
-
-    <span class="verdict info">Verdict: RaterHub webpage replay is active</span>
+    <p>Production session replay sampling remains 10%. Since 3.4.0, additional error-triggered replay sampling is 0%, not the 100% shown in the earlier audit. An error may still appear within an already sampled session. Performance trace sampling is also zero.</p>
+    <p>Visible page text has no global mask. Inputs are masked, media is blocked, and Replay network-body capture is disabled. These settings are unchanged in 3.4.1.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — plugins/sentry/replay.js, lines 20-26
+	const production = getSentryEnvironment() === 'production';
+	return {
+		replaysSessionSampleRate: production ? 0.1 : 1.0,
+		replaysOnErrorSampleRate: 0,
+	};
+}
+</pre></details></div>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — plugins/sentry/replay.js, lines 37-50
+		maskAllInputs: true,
+		blockAllMedia: true,
+		networkCaptureBodies: false,
+		useCompression: Boolean(workerUrl),
+		workerUrl,
+		stickySession: false,
+		flushMinDelay: 4000,
+		flushMaxDelay: 8000,
+		minReplayDuration: 4000,
+		mutationLimit: 100000,
+		mutationBreadcrumbLimit: 100000,
+		beforeAddRecordingEvent: stampReplayMetaHref,
+	};
+}</pre></details></div>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — plugins/sentry/content-script.js, lines 24-39
+		Sentry.init({
+			dsn,
+			environment: getSentryEnvironment(),
+			release: getRelease(),
+			tracesSampleRate: 0,
+			...replaySampleRates,
+			sendDefaultPii: false,
+			skipBrowserExtensionCheck: true,
+			defaultIntegrations: false,
+			transport: makeContentScriptSentryTransport(Sentry),
+			integrations: [
+				Sentry.replayIntegration(getContentScriptReplayIntegrationOptions()),
+			],
+			beforeSend: createBeforeSend({ runtimeContext: 'content-script', sessionId }),
+			beforeSendReplay: createBeforeSendReplay({ runtimeContext: 'content-script', sessionId }),
+		});</pre></details></div>
+    <span class="verdict info">Verdict: Webpage replay remains configured; additional error-triggered sampling is off</span>
 
     <h2>3. Is the whole monitor recorded?</h2>
     <p><strong>The active RaterHub code does not automatically record your whole screen.</strong> The 10% setting above only controls replay of the webpage.</p>
     <p>The Sentry library also includes a standard support function for a user-requested screenshot. The RaterHub code does not turn this function on. Its presence in the library does not mean that a screenshot was taken.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>Library support code (not enabled in RaterHub)</summary>
-            <pre>// Sentry feedback support code in the original bundle
+    <div class="code-block"><details><summary>Library support code (not enabled in RaterHub)</summary><pre>// Sentry feedback support code in the original bundle
 const stream = await mediaDevices.getDisplayMedia({
   video: { width: innerWidth * scale, height: innerHeight * scale },
   audio: false,
@@ -83,15 +104,29 @@ const stream = await mediaDevices.getDisplayMedia({
   preferCurrentTab: true,
   selfBrowserSurface: 'include',
   surfaceSwitching: 'exclude',
-});</pre>
-        </details>
-    </div>
-
+});</pre></details></div>
     <p class="source">If this standard support function were used, Chrome or Edge would normally ask what to share. No active RaterHub call to it was found.</p>
-
     <span class="verdict safe">Verdict: No automatic whole-screen recording found</span>
 
-    <p class="source">Evidence: original installed bundle at <code>incoming_packages\welo_3.3.5_installed_2026-09-11\content-script\index.js</code>. This is a static code review; it proves configured capability, not whether a particular session was sampled or transmitted.</p>
+    <h2>4. Can replay be associated with my account?</h2>
+    <p><strong>Yes.</strong> Since 3.4.0, shared context explicitly supports platform, action, task and platform-user identity. On RaterHub the identifier can be an email. Earlier replay should not be assumed anonymous either, because it already contained session identifiers and potentially identifying visible text.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — plugins/sentry/activity-context.js, lines 21-32
+function applyToSdk() {
+	if (!sdk) return;
+	try {
+		const scope = sdk.getCurrentScope?.() ?? sdk;
+		if (typeof scope.setTag !== 'function') return;
+		for (const key of TAG_KEYS) {
+			if (snapshot[key]) scope.setTag(key, snapshot[key]);
+			else if (typeof scope.removeTag === 'function') scope.removeTag(key);
+		}
+		if (snapshot.platformUserId &amp;&amp; typeof sdk.setUser === 'function') {
+			sdk.setUser({ id: snapshot.platformUserId });
+		}</pre></details></div>
+    <p>The content-script Sentry initializer has no login/privacy-acceptance gate. The acceptance check for the separate automatic assistance lookup is not a universal telemetry gate.</p>
+    <h2>5. What changed in version 3.4.1?</h2>
+    <p>The Sentry SDK changed from 10.74.0 to 10.75.0, with internal fixes including Replay attribute handling. Welo’s sampling and masking settings did not change. The new answer-checking request is separate from Sentry and can explicitly send a comment even though Replay masks input fields.</p>
+    <p class="source">Evidence: distributed extension 3.4.1 and recovered sources, compared with preserved earlier packages. This is a static review with isolated tests; it does not establish whether a particular session was sampled, transmitted or retained.</p>
 </main>
 </body>
 </html>

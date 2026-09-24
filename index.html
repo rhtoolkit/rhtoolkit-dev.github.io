@@ -34,24 +34,15 @@
 </head>
 <body>
 <main class="main-content">
-    <div class="page-title">Welo Data Assistant Audit (Version 3.3.5)</div>
+    <div class="page-title">Welo Data Assistant Audit (Version 3.4.1)</div>
     <div class="page-subtitle">Review based only on the locally installed extension files.</div>
-    <div class="alternative">
-        <a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">View RHTS</a>
-    </div>
-
-    <div class="warning">
-        <p><strong>Version note:</strong> Version 3.3.5 has the RaterHub features enabled again, including activity tracking and webpage diagnostics. This audit describes only the installed 3.3.5 files; a future update may change what is active.</p>
-    </div>
+    <div class="alternative"><a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">View RHTS</a></div>
+    <div class="warning"><p><strong>Version note:</strong> Updated for 3.4.1, including changes introduced in 3.4.0. This audit covers RaterHub and shared components that affect it, based on the distributed extension files. Future updates may change what is active.</p></div>
 
     <h2>1. Can Welo see my other browser tabs?</h2>
     <p><strong>Yes. It can collect the URLs of open tabs when an activity event is sent.</strong> It does not, in the inspected RaterHub path, read the page contents of unrelated tabs.</p>
     <p>It also counts new tabs opened while an activity event is active.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>View Extension Source Code</summary>
-            <pre>// event-manager/event-class.js, lines 136-137
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// event-manager/event-class.js, lines 136-137
 const tabs = await chrome.tabs.query({});
 allUrls = tabs.map(item =&gt; item.url).filter(Boolean);
 
@@ -61,50 +52,36 @@ tabs: allUrls,
 // event-manager/index.js, lines 954-956
 chrome.tabs.onCreated.addListener((tab) =&gt; {
   eventManager.manageEvent({ action: "botCapabilities", type: "tabOpened" });
-});</pre>
-        </details>
-    </div>
-
-    <div class="warning">
-        <p><strong>Practical advice:</strong> Use a separate browser profile / separate browser for work. This keeps personal URLs outside the group of tabs that the extension can query.</p>
-    </div>
-
+});</pre></details></div>
+    <div class="warning"><p><strong>Practical advice:</strong> Use a separate browser profile / separate browser for work. This keeps personal URLs outside the group of tabs that the extension can query.</p></div>
     <span class="verdict danger">Verdict: Other-tab URLs can be reported</span>
 
     <h2>2. Can it record my whole screen?</h2>
-    <p><strong>No.</strong> Sentry is used for errors, performance and replay of the RaterHub webpage. It does not automatically record your monitor or other tabs.</p>
-    <p>Normal webpage replay is sampled at 10%. If Sentry captures an error, the separate error-replay setting is 100%. Visible page text may appear in a replay; form inputs are masked.</p>
-    <p>The package contains standard screenshot support, but the active RaterHub flow does not turn it on.</p>
-    <p><a href="Welo_Sentry_Audit_3.3.5.html">Open the dedicated Sentry audit for version 3.3.5 →</a></p>
-
-    <div class="code-block">
-        <details>
-            <summary>View Extension Source Code</summary>
-            <pre>// content-script/index.js, lines 83-98
-// Active Sentry configuration
-tracesSampleRate: 1.0,
-replaysSessionSampleRate: 0.1,
-replaysOnErrorSampleRate: 1.0,
-sendDefaultPii: false,
-Sentry.replayIntegration({
-  maskAllText: false,
-  maskAllInputs: true,
-  blockAllMedia: false,
-});</pre>
-        </details>
-    </div>
-
-    <span class="verdict info">Verdict: No automatic screen recording; RaterHub webpage replay is active</span>
+    <p><strong>No automatic whole-screen recording was found in the active RaterHub flow.</strong> Sentry Replay reconstructs the webpage and can include page interactions; it does not automatically record your monitor or unrelated tabs.</p>
+    <p>Production session replay remains sampled at 10%. Since 3.4.0, additional error-triggered replay sampling is 0%, performance trace sampling is 0%, and media is blocked. Visible page text has no global mask; form inputs are masked. Request and response body capture is disabled for Replay.</p>
+    <p><a href="sentry.html">Open the dedicated Sentry audit for version 3.4.1 →</a></p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — plugins/sentry/replay.js, lines 20-26
+	const production = getSentryEnvironment() === 'production';
+	return {
+		replaysSessionSampleRate: production ? 0.1 : 1.0,
+		replaysOnErrorSampleRate: 0,
+	};
+}
+</pre></details></div>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — plugins/sentry/replay.js, lines 37-42
+		maskAllInputs: true,
+		blockAllMedia: true,
+		networkCaptureBodies: false,
+		useCompression: Boolean(workerUrl),
+		workerUrl,
+		stickySession: false,</pre></details></div>
+    <span class="verdict info">Verdict: No automatic screen recording found; webpage replay remains configured</span>
 
     <h2>3. Does it track my mouse or keyboard?</h2>
     <p><strong>No general mouse-movement, cursor-coordinate, scrolling-speed or keystroke tracker was found.</strong> RaterHub copy/paste prevention is disabled.</p>
     <p>There is one narrow mouse listener for the Cancel and Release controls. It sends an internal event; it does not click the control automatically.</p>
-    <p>Sentry Replay may include page interactions in a selected replay, but that is not a continuous mouse or keyboard recorder.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>View Extension Source Code</summary>
-            <pre>// utils/platform-flags.js, lines 10-12
+    <p>Sentry Replay may include page interactions in a selected replay. No separate general keystroke logger was found in the reviewed RaterHub code; this does not mean a selected replay is free of interaction data.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// utils/platform-flags.js, lines 10-12
 export const COPY_PASTE_PREVENTION = {
   [Platform.RATERHUB]: false,
 };
@@ -118,55 +95,34 @@ document.addEventListener('mousedown', (event) =&gt; {
   if (isReleaseTarget(event.target)) {
     notify('released');
   }
-}, true);</pre>
-        </details>
-    </div>
-
+}, true);</pre></details></div>
     <span class="verdict safe">Verdict: No general mouse or keyboard tracking found</span>
 
     <h2>4. Can it list my other installed extensions?</h2>
     <p><strong>No direct list was found.</strong> The manifest does not request Chrome's <code>management</code> permission, which is normally required to obtain the names, IDs or versions of installed extensions.</p>
     <p>The source contains a fallback collector for this information. In the installed package, the API is unavailable because the manifest has no <code>management</code> permission, so the collector returns empty values.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>View Extension Source Code</summary>
-            <pre>// background/device-fingerprint.js, lines 137-141
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// background/device-fingerprint.js, lines 137-141
 const result = {
   installed_extensions: null,
   extensions_count: null,
   extensions_hash: null,
 };
 if (!chrome.management?.getAll) return result;
-const all = await chrome.management.getAll();</pre>
-        </details>
-    </div>
-
-    <div class="code-block">
-        <details>
-            <summary>View manifest.json permissions</summary>
-            <pre>// manifest.json, line 36
+const all = await chrome.management.getAll();</pre></details></div>
+    <div class="code-block"><details><summary>View manifest.json permissions</summary><pre>// manifest.json, line 36
 "permissions": [
   "activeTab", "storage", "tabs", "webRequest", "scripting",
   "alarms", "cookies", "idle", "webNavigation", "offscreen"
 ]
-// There is no "management" permission.</pre>
-        </details>
-    </div>
-
+// There is no "management" permission.</pre></details></div>
     <p class="source">manifest.json, line 36: permissions include <code>tabs</code> and <code>webRequest</code>, but not <code>management</code>.</p>
     <p>That is different from seeing an effect inside RaterHub. If another extension adds a visible button or changes the page DOM, Welo may see the page element or its effect, but it does not learn which extension created it.</p>
-
     <span class="verdict safe">Verdict: Other-extension listing is unavailable under the current manifest</span>
 
     <h2>5. Can it identify an auto-submit or workflow helper?</h2>
     <p><strong>Welo can see that RaterHub completed a task, but it does not identify which tool or extension caused the action.</strong></p>
     <p>It watches successful RaterHub completion requests such as <code>/preview</code> or <code>/commit</code>. The event does not contain an <code>autoSubmit</code> flag, another extension's ID, click coordinates or a general mouse trace.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>View Extension Source Code</summary>
-            <pre>// background/scripts/raterhub/raterhub-script.js, lines 220-239
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// background/scripts/raterhub/raterhub-script.js, lines 220-239
 this.commitListener = (details) =&gt; {
   if (details.method !== 'POST' || details.statusCode !== 200) return;
   // ...
@@ -175,53 +131,43 @@ this.commitListener = (details) =&gt; {
 
 chrome.webRequest.onCompleted.addListener(this.commitListener, {
   urls: raterhubWebRequestUrls(RATERHUB_COMMIT_TASK_PATH + '*'),
-});</pre>
-        </details>
-    </div>
-
-    <div class="code-block">
-        <details>
-            <summary>View monitored RaterHub endpoints</summary>
-            <pre>// raterhub-script.js
+});</pre></details></div>
+    <div class="code-block"><details><summary>View monitored RaterHub endpoints</summary><pre>// raterhub-script.js
 chrome.webRequest.onCompleted.addListener(this.fulfillListener, {
   urls: raterhubWebRequestUrls(`${RATERHUB_PREVIEW_TASK_PATH}*`),
 });
 
 chrome.webRequest.onCompleted.addListener(this.commitListener, {
   urls: raterhubWebRequestUrls(`${RATERHUB_COMMIT_TASK_PATH}*`),
-});</pre>
-        </details>
-    </div>
-
+});</pre></details></div>
     <p class="source">This describes what Welo records. It does not decide whether automation is allowed by RaterHub or by the task provider.</p>
-
     <span class="verdict info">Verdict: Completion may be observed; helper identity is not identified</span>
 
-    <h2>6. What changed from version 3.3.3?</h2>
-    <p>The important change is that the RaterHub platform is now enabled. Copy/paste prevention remains disabled, and the Welo dashboard remains disabled.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>View Extension Source Code</summary>
-            <pre>// utils/platform-flags.js, version 3.3.5
-[Platform.RATERHUB]: true,
-
-// Copy/paste prevention remains disabled
-[Platform.RATERHUB]: false,</pre>
-        </details>
-    </div>
-
-    <span class="verdict info">Main change: RaterHub-specific code is enabled again</span>
+    <h2>6. What changed in version 3.4.0?</h2>
+    <p><strong>Sentry settings and identity context changed.</strong> Error-triggered replay sampling fell from 100% to 0%, performance trace sampling from 100% to 0%, and media blocking was enabled. Normal production replay sampling stayed at 10%.</p>
+    <p>Sentry gained explicit platform, action, task and platform-user context. The user identifier can be your RaterHub email. The replay should not be described as anonymous: earlier versions already had session identifiers and potentially identifying visible text.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — plugins/sentry/activity-context.js, lines 21-32
+function applyToSdk() {
+	if (!sdk) return;
+	try {
+		const scope = sdk.getCurrentScope?.() ?? sdk;
+		if (typeof scope.setTag !== 'function') return;
+		for (const key of TAG_KEYS) {
+			if (snapshot[key]) scope.setTag(key, snapshot[key]);
+			else if (typeof scope.removeTag === 'function') scope.removeTag(key);
+		}
+		if (snapshot.platformUserId &amp;&amp; typeof sdk.setUser === 'function') {
+			sdk.setUser({ id: snapshot.platformUserId });
+		}</pre></details></div>
+    <p>A shared tab restriction can close conflicting work-platform tabs, including RaterHub. Existing open-tab URL collection and task-completion monitoring remain. No new helper-identification field was found.</p>
+    <p>Extension permissions stayed the same. A local Replay worker was added as a web-accessible resource. RaterHub copy/paste prevention remains disabled.</p>
+    <span class="verdict info">Main changes: Sentry configuration, explicit identity context and work-tab conflicts</span>
 
     <h2>7. Does it collect location or device information?</h2>
-    <p><strong>Yes, in a limited way.</strong> When you are logged in, the extension can contact <code>ipwho.is</code> to receive the ISP, country and region linked to your public IP.</p>
+    <p><strong>Yes.</strong> When you are logged in, the extension can contact <code>ipwho.is</code> to receive the ISP, country and region linked to your public IP.</p>
     <p>This means <code>ipwho.is</code> can see the public IP used for that request. The check can run in the background after login, even before a task is submitted. The inspected RaterHub activity event does not include the IP lookup fields. This check is separate from Sentry and tab URLs.</p>
-    <p>The extension also creates a random device token and stores it locally.</p>
-
-    <div class="code-block">
-        <details>
-            <summary>View the relevant source code</summary>
-            <pre>// background.js, lines 46-51
+    <p>The extension also creates a random device token and contains broader local fingerprint collection, including offscreen/browser signals. These capabilities are not new in 3.4.1. The inspected normal RaterHub activity payload excludes device-fingerprint and viewport fields; local collection and server transmission are different questions.</p>
+    <div class="code-block"><details><summary>View the relevant source code</summary><pre>// background.js, lines 46-51
 if (!isUserLoggedIn) return;
 warmUpDeviceFingerprint().catch(() =&gt; {});
 
@@ -239,11 +185,145 @@ return {
   device_ip_isp: data.connection?.isp || data.org || null,
   device_ip_country: data.country_code || data.country || null,
   device_ip_region: data.region || data.regionName || null,
-};</pre>
-        </details>
-    </div>
-
+};</pre></details></div>
     <span class="verdict info">Verdict: IP lookup and local device token are present; IP fields are not in the RaterHub activity payload</span>
+
+
+    <h2>8. What does the new Check My Answer button do?</h2>
+    <p><strong>It asks the server to review your answer before you submit the task.</strong> The button appears on supported page layouts. In the normal interface flow, clicking it reads the selected rating and task context, then sends an authenticated request to Welo.</p>
+    <p>The fields depend on the layout: task and rater identifiers, comment when applicable, query or prompt, response text or HTML, ratings, result links and snippets, display order, and an embedded task image when extracted. Not every request contains every field.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — content-script/raterhub-lint-check.js, lines 604-608
+	button.addEventListener('click', async () =&gt; {
+		const taskId = getTaskId();
+		const raterId = await getRaterId();
+		const commentText = textarea.value.trim();
+		const taskContext = getTaskContext(textarea);</pre></details></div>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — event-manager/index.js, lines 117-132
+      requestBody = {
+        task_id: taskId,
+        rater_id: raterId,
+        comment_text: commentText ?? '',
+        task_context: {
+          query: taskContext?.query ?? '',
+          ai_response: taskContext?.ai_response ?? '',
+          highlighted_text: taskContext?.highlighted_text ?? '',
+          label: taskContext?.label ?? '',
+          item_id: taskContext?.item_id ?? taskId,
+          ...(taskContext?.image ? { image: taskContext.image } : {}),
+        },
+      };
+  }
+
+  const response = await lintCheck(requestBody);</pre></details></div>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — api/user-activity.js, lines 140-142
+export async function lintCheck(reqBody) {
+  return post("/user-activity/lint-check", reqBody);
+}</pre></details></div>
+    <p>The production endpoint is <code>https://midgard.welodata.ai/api/user-activity/lint-check</code>. Masking inputs in Sentry does not prevent this separate request from sending a comment. The client does not reveal the analysis model, retention or consequences for the rater.</p>
+    <p><strong>Submit is blocked after local checks pass and while the request is pending.</strong> It can remain blocked for triggered blocking flags other than <code>wrong_label</code>, or the combination <code>is_mvq</code> and <code>wrong_label</code>. Errors handled by the code release the block.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — content-script/raterhub-lint-check.js, lines 625-655
+		button.disabled = true;
+		button.textContent = 'Checking...';
+		blockSubmit();
+
+		try {
+			const result = await runLintCheck(taskId, raterId, commentText, taskContext);
+			if (result?.ok &amp;&amp; result?.data) {
+				const mvqLabelMismatch = hasMvqLabelMismatch(result.data);
+				const hasBlockingIssues = hasOtherBlockingIssues(result.data);
+				showLintResultsPanel(result.data, {
+					onOverride: () =&gt; {
+						if (!hasBlockingIssues) {
+							unblockSubmit();
+						}
+					},
+				});
+				if (!hasBlockingIssues &amp;&amp; !mvqLabelMismatch) {
+					unblockSubmit();
+				}
+			} else {
+				if (result?.ok === false &amp;&amp; result?.error) {
+					showPageFlash(result.error, 'error');
+				}
+				unblockSubmit();
+			}
+		} catch {
+			showPageFlash('Comment lint check failed. Please try again.', 'error');
+			unblockSubmit();
+		} finally {
+			button.disabled = false;
+			button.textContent = CHECK_BUTTON_LABEL;</pre></details></div>
+    <p>The override callback only unlocks when there are no other blocking issues; it does not submit the task. No automatic rewriting of the answer or mandatory check on every native Submit was found. No periodic comment upload while typing was found in these UI paths.</p>
+    <span class="verdict info">New in 3.4.1: answer review by API and conditional Submit blocking</span>
+
+    <h2>9. What else changed in version 3.4.1?</h2>
+    <p><strong>A separate assistance lookup can run automatically.</strong> On a recognized preview page, after login and privacy-acceptance checks, the extension queries information by task ID. If usable data is returned, it can display a sidebar with claims, sources and temporal guidance. This does not require clicking Check My Answer.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — background/scripts/raterhub/index.js, lines 54-71
+async function displayClaimDecomposition(tabId, taskId) {
+	if (!taskId) return;
+
+	const response = await get(
+		`/raterhub/llm-task-data/${encodeURIComponent(taskId)}/claim-decomposition`,
+		{ silent: true },
+	);
+	const result = response?.data;
+	if (result?.flow !== 'claim_decomposition' || !Array.isArray(result.subclaims)) {
+		return;
+	}
+
+	await chrome.tabs.sendMessage(tabId, {
+		action: 'showRaterhubClaimDecomposition',
+		result,
+	}).catch(() =&gt; {});
+}
+</pre></details></div>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — background/scripts/raterhub/index.js, lines 94-101
+		const userIsLoggedIn = await isLoggedIn();
+		if (!userIsLoggedIn) return;
+		const userHasAcceptedPrivacyNotice = await hasAcceptedPrivacyNotice();
+		if (!userHasAcceptedPrivacyNotice) return;
+
+		if (isRaterhubPreviewTaskPageUrl(tab.url)) {
+			void displayClaimDecomposition(tabId, taskId);
+		}</pre></details></div>
+    <p>This GET does not upload the comment or task body in its request body. The client does not establish how the server obtained the underlying information.</p>
+    <p><strong>Email capture is more persistent.</strong> New navigation listeners schedule attempts immediately and after 2, 5, 10 and 20 seconds, targeting all frames. The capture script also polls and observes page changes. Email reading already existed; these retries extend its coverage.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — background/scripts/raterhub/index.js, lines 23-52
+const RATERHUB_CAPTURE_DELAYS_MS = [0, 2000, 5000, 10000, 20000];
+
+function injectRaterhubPlatformUserIdCapture(tabId) {
+	chrome.scripting.executeScript({
+		target: { tabId, allFrames: true },
+		func: raterhubCapturePlatformUserIdScript,
+	}).catch(() =&gt; {});
+}
+
+export function scheduleRaterhubPlatformUserIdCapture(tabId) {
+	RATERHUB_CAPTURE_DELAYS_MS.forEach((delay) =&gt; {
+		setTimeout(() =&gt; injectRaterhubPlatformUserIdCapture(tabId), delay);
+	});
+}
+
+export function initRaterhubListeners() {
+	const onRaterhubNavigation = (details) =&gt; {
+		if (details.frameId !== 0) {
+			return;
+		}
+		scheduleRaterhubPlatformUserIdCapture(details.tabId);
+	};
+
+	chrome.webNavigation.onCompleted.addListener(onRaterhubNavigation, {
+		url: [{ hostSuffix: 'raterhub.com' }],
+	});
+	chrome.webNavigation.onHistoryStateUpdated.addListener(onRaterhubNavigation, {
+		url: [{ hostSuffix: 'raterhub.com' }],
+	});
+}</pre></details></div>
+    <p>The new local-capture listeners do not require login or privacy acceptance. They cache the identity and send an internal message when it changes. This alone does not prove immediate server transmission without login.</p>
+    <p><strong>Sentry SDK: 10.74.0 → 10.75.0.</strong> Welo’s own replay settings remain unchanged from 3.4.0. No new extension permissions were added in 3.4.1.</p>
+    <span class="verdict info">Also new: automatic assistance lookup and reinforced email capture</span>
+    <p class="source">Reviewed September 23, 2026. Extension ID: <code>oceohhnabfcnjfcpppaegdfecladagcc</code>. New excerpts are copied from recovered 3.4.1 source maps. Static inspection and isolated tests establish client behavior, not actual traffic, server policy, retention or penalties.</p>
+
 </main>
 </body>
 </html>
