@@ -190,14 +190,15 @@ return {
 
 
     <h2>8. What does the new Check My Answer button do?</h2>
-    <p><strong>It asks the server to review your answer before you submit the task.</strong> The button appears on supported page layouts. In the normal interface flow, clicking it reads the selected rating and task context, then sends an authenticated request to Welo.</p>
-    <p>The fields depend on the layout: task and rater identifiers, comment when applicable, query or prompt, response text or HTML, ratings, result links and snippets, display order, and an embedded task image when extracted. Not every request contains every field.</p>
+    <p><strong>The button sends your answer and task information to Welo for a check, then shows the result returned by Welo.</strong> The code shows these steps:</p>
+    <p><strong>1. It reads what you entered.</strong> Depending on the page, this includes your selected rating and written comment, along with task information and your rater identifier. The example below reads the comment from the text box.</p>
     <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — content-script/raterhub-lint-check.js, lines 604-608
 	button.addEventListener('click', async () =&gt; {
 		const taskId = getTaskId();
 		const raterId = await getRaterId();
 		const commentText = textarea.value.trim();
 		const taskContext = getTaskContext(textarea);</pre></details></div>
+    <p><strong>2. It sends that information to Welo.</strong> In the request example below, <code>comment_text</code> is the written comment and <code>label</code> is the selected rating. The fields vary by page layout.</p>
     <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — event-manager/index.js, lines 117-132
       requestBody = {
         task_id: taskId,
@@ -219,8 +220,7 @@ return {
 export async function lintCheck(reqBody) {
   return post("/user-activity/lint-check", reqBody);
 }</pre></details></div>
-    <p>The production endpoint is <code>https://midgard.welodata.ai/api/user-activity/lint-check</code>. Masking inputs in Sentry does not prevent this separate request from sending a comment. The client does not reveal the analysis model, retention or consequences for the rater.</p>
-    <p><strong>Submit is blocked after local checks pass and while the request is pending.</strong> It can remain blocked for triggered blocking flags other than <code>wrong_label</code>, or the combination <code>is_mvq</code> and <code>wrong_label</code>. Errors handled by the code release the block.</p>
+    <p><strong>3. It shows Welo’s result.</strong> Submit is blocked while the check is pending. Depending on the returned result, the code unlocks Submit or keeps it blocked. In the code below, <code>showLintResultsPanel</code> displays the result and <code>unblockSubmit</code> releases the button.</p>
     <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — content-script/raterhub-lint-check.js, lines 625-655
 		button.disabled = true;
 		button.textContent = 'Checking...';
@@ -253,8 +253,9 @@ export async function lintCheck(reqBody) {
 		} finally {
 			button.disabled = false;
 			button.textContent = CHECK_BUTTON_LABEL;</pre></details></div>
-    <p>The override callback only unlocks when there are no other blocking issues; it does not submit the task. No automatic rewriting of the answer or mandatory check on every native Submit was found. No periodic comment upload while typing was found in these UI paths.</p>
-    <span class="verdict info">New in 3.4.1: answer review by API and conditional Submit blocking</span>
+    <p>The button does not rewrite your answer or submit the task automatically. The inspected interface does not require you to click it before every submission.</p>
+    <p><strong>Why did Welo add it?</strong> The extension code shows how the button works, but does not establish the company’s reason for adding it or how the server judges an answer. It does not prove that using it changes your score or causes penalties.</p>
+    <span class="verdict info">Confirmed: sends answer data, displays the server result and controls Submit</span>
 
     <p class="source">Reviewed September 23, 2026. Extension ID: <code>oceohhnabfcnjfcpppaegdfecladagcc</code>. New excerpts are copied from recovered 3.4.1 source maps. Static inspection and isolated tests establish client behavior, not actual traffic, server policy, retention or penalties.</p>
 
