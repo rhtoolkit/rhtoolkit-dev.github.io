@@ -190,9 +190,10 @@ return {
 
 
     <h2>8. What does the new Check My Answer button do?</h2>
-    <p>When you click this button, the extension sends your answer and task details to Welo. It then shows the result Welo sends back. Your comment and chosen rating can be included in what is sent.</p>
+    <p>This button requests a check of your answer. Clicking it sends answer and task information to a server at <code>midgard.welodata.ai</code>, then shows the response on the page. What is sent can include your written comment and selected rating.</p>
     <p>While you wait, you cannot submit the task. Depending on the result, Submit may stay blocked. The button does not change your answer or hand in the task for you.</p>
-    <p>This is what the code confirms. It does not show how Welo decides the result.</p>
+    <p>The code shows where the data is sent. It does not show how the server checks your answer or why Welo added this feature.</p>
+    <p class="source">The source below connects the button to the sending code and the configured Welo address. The complete destination is <code>https://midgard.welodata.ai/api/user-activity/lint-check</code>. This proves the programmed destination, not that a particular click was successfully received.</p>
     <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// 3.4.1 — content-script/raterhub-lint-check.js, lines 604-608
 	button.addEventListener('click', async () =&gt; {
 		const taskId = getTaskId();
@@ -221,6 +222,67 @@ return {
 // 3.4.1 — api/user-activity.js, lines 140-142
 export async function lintCheck(reqBody) {
   return post("/user-activity/lint-check", reqBody);
+}
+
+// 3.4.1 — utils/app-config.js, lines 2-2
+const ENVIRONMENT = 'production';
+
+// 3.4.1 — utils/app-config.js, lines 15-15
+const getProductionURL = () =&gt; 'https://midgard.welodata.ai/api';
+
+// 3.4.1 — utils/app-config.js, lines 17-30
+const getURL = (environment) =&gt; {
+	switch (environment) {
+		case 'local':
+			return getLocalhostURL();
+		case 'development':
+			return getDevelopmentURL();
+		case 'localdocker':
+			return getLocalDockerURL(FEATURE_ID);
+		case 'production':
+			return getProductionURL();
+		default:
+			return getLocalhostURL();
+	}
+};
+
+// 3.4.1 — utils/app-config.js, lines 47-48
+export default {
+	baseUrl: getURL(ENVIRONMENT),
+
+// 3.4.1 — api/http-client.js, lines 2-2
+import appConfig from '@/utils/app-config.js';
+
+// 3.4.1 — api/http-client.js, lines 115-122
+export async function post(url, reqBody, isExempt = false, { silent = false } = {}) {
+	try {
+		return await apiCall(url, 'POST', reqBody, isExempt, silent);
+	} catch (error) {
+		captureBackgroundException(error, { tags: { api: 'post', url: stripUrlQuery(url) } });
+		return { data: { error: true } };
+	}
+}
+
+// 3.4.1 — api/http-client.js, lines 146-151
+async function apiCall(url, method, reqBody = null, isExempt = false, silent = false) {
+	try {
+		if (!isExempt) await checkJWT();
+		const jwtAuth = await getFromLocalStorage(constants.MIDGARD_JWT_KEY);
+
+		let response = await executeRequest(url, method, jwtAuth, reqBody, isExempt);
+
+// 3.4.1 — api/http-client.js, lines 133-144
+async function executeRequest(url, method, jwtAuth, reqBody, isExempt) {
+	const headers = isExempt ? {} : await buildExtensionHeaders(jwtAuth);
+
+	const response = await fetch(`${appConfig.baseUrl}${url}`, {
+		method,
+		cache: 'no-store',
+		headers,
+		...(reqBody &amp;&amp; { body: JSON.stringify(reqBody) }),
+	});
+
+	return response;
 }
 
 // 3.4.1 — content-script/raterhub-lint-check.js, lines 625-655
