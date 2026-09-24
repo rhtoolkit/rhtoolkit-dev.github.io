@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="RaterHub-only audit of Welo Data Assistant 3.4.1, with version comparisons and source-code evidence."><title>Welo Sentry Audit — 3.4.1</title><style>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welo Sentry Audit</title>
+    <style>
         :root { --bg:#141414; --text:#e2e2e2; --muted:#888; --border:#2e2e2e; --accent:#fff; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:16px; line-height:1.6; }
         .main-content { max-width:850px; margin:auto; padding:80px 40px; }
         .page-title { color:var(--accent); font-size:26px; font-weight:600; margin-bottom:8px; }
-        .alternative { color:var(--muted); text-align:center; margin-bottom:50px; }
-        .alternative a { display:inline-block; color:#fff; border:1px solid var(--border); border-radius:4px; padding:7px 14px; text-decoration:none; }
-        .alternative a:hover { border-color:#888; }
-        .page-subtitle { color:var(--muted); margin-bottom:12px; }
+        .page-subtitle { color:var(--muted); margin-bottom:50px; }
         h2 { color:var(--accent); font-size:18px; margin:50px 0 12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
         p { color:#ccc; margin-bottom:20px; }
         code { background:#1f1f1f; border:1px solid var(--border); border-radius:4px; color:#eee; font:14px Consolas,Monaco,monospace; padding:3px 6px; }
         .verdict { display:inline-block; padding:6px 12px; margin:14px 0 30px; border:1px solid var(--border); border-radius:4px; font-size:15px; font-weight:600; }
         .safe { color:#6ee7b7; border-color:rgba(110,231,183,.3); background:rgba(110,231,183,.05); }
-        .danger { color:#ff8b8b; border-color:rgba(229,115,115,.3); background:rgba(229,115,115,.05); }
         .info { color:#c4b5e3; border-color:rgba(196,181,227,.3); background:rgba(196,181,227,.05); }
-        .warning { border-left:2px solid #e57373; padding:4px 0 4px 24px; margin:24px 0; }
-        .warning p { margin:0; }
+        .tldr { border-left:2px solid var(--muted); padding:4px 0 4px 24px; margin:20px 0 50px; }
+        .tldr p { margin:0; color:#e2e2e2; }
         .code-block { border:1px solid var(--border); border-radius:6px; margin:20px 0; overflow:hidden; }
         .code-block summary { background:#1a1a1a; color:var(--muted); cursor:pointer; padding:14px 20px; font-size:14px; }
         .code-block summary:hover { color:#fff; }
@@ -25,74 +26,72 @@
         .source { color:#888; font-size:13px; margin:-8px 0 14px; }
         a { color:#aaa; }
         @media (max-width:620px) { .main-content { padding:40px 20px; } }
-    
- h1.page-title {line-height:1.3} nav {display:flex;flex-wrap:wrap;gap:10px 20px;margin:24px 0}
- a {color:#c6c6c6;text-underline-offset:3px} a:focus-visible,summary:focus-visible {outline:2px solid #6ee7b7;outline-offset:4px}
- h3 {font-size:16px;margin:24px 0 12px} ul,ol {margin:0 0 24px 24px;color:#ccc} li {margin:8px 0}
- .table-wrap {overflow-x:auto;margin:20px 0} table {border-collapse:collapse;width:100%;font-size:14px}
- th,td {text-align:left;border:1px solid var(--border);padding:12px;vertical-align:top} th {color:#fff;background:#1f1f1f}
- .source {overflow-wrap:anywhere;margin:12px 0} code {overflow-wrap:anywhere} pre {white-space:pre;tab-size:2}
- .badge {font-size:12px;color:#6ee7b7;text-transform:uppercase;letter-spacing:.08em} section {scroll-margin-top:24px}
- .method {margin-top:50px;padding-top:24px;border-top:1px solid var(--border);font-size:14px}
- .code-line {display:block;min-height:1.6em} .code-line:target {background:#30382d;color:white}
- .line-number {display:inline-block;width:4em;color:#888;text-decoration:none;user-select:none}
- </style></head><body><main class="main-content"><h1 class="page-title">Welo Sentry Audit — 3.4.1</h1><p class="page-subtitle">RaterHub · Extension 3.4.1 · Reviewed September 23, 2026</p><nav aria-label="Audit pages"><a href="index.html">Main audit</a><a href="sentry.html">Sentry audit</a></nav><div class="warning"><p><strong>Correction to the old page:</strong> the 3.3.5 error-replay rate of 100% no longer describes this version. It became 0% in 3.4.0 and remains 0% in 3.4.1.</p></div><section id="settings"><h2>1. What is configured now?</h2><p>Sentry provides diagnostic reporting and webpage replay. The production session replay rate is 10%, not a guarantee that exactly one in ten tasks is recorded. The non-production rate is 100%. A zero error-triggered replay rate does not prevent errors appearing within a session already selected for replay.</p><div class="code-block"><details><summary>View extension source code</summary><pre>	const production = getSentryEnvironment() === 'production';
-	return {
-		replaysSessionSampleRate: production ? 0.1 : 1.0,
-		replaysOnErrorSampleRate: 0,
-	};
-}
-</pre></details></div><p class="source">3.4.1 · plugins/sentry/replay.js · lines 20–26 · <a href="evidence.html#replay-rates">Numbered evidence</a></p><div class="code-block"><details><summary>View extension source code</summary><pre>		maskAllInputs: true,
-		blockAllMedia: true,
-		networkCaptureBodies: false,
-		useCompression: Boolean(workerUrl),
-		workerUrl,
-		stickySession: false,
-		flushMinDelay: 4000,
-		flushMaxDelay: 8000,
-		minReplayDuration: 4000,
-		mutationLimit: 100000,
-		mutationBreadcrumbLimit: 100000,
-		beforeAddRecordingEvent: stampReplayMetaHref,
-	};
-}</pre></details></div><p class="source">3.4.1 · plugins/sentry/replay.js · lines 37–50 · <a href="evidence.html#replay-options">Numbered evidence</a></p><div class="code-block"><details><summary>View extension source code</summary><pre>	const dsn = appConfig.sentryDsn;
-	if (!dsn || !isSentryEnabled()) return;
+    </style>
+</head>
+<body>
+<main class="main-content">
+    <div class="page-title">Welo Sentry Audit (Version 3.3.5)</div>
+    <div class="page-subtitle">What Sentry does while you use RaterHub.</div>
 
-	(async () =&gt; {
-		const sessionId = await getExtensionSessionId();
-		const replaySampleRates = getContentScriptReplaySampleRates();
+    <p><a href="Welo_Security_Audit_3.3.5.html">← Back to the main security audit</a></p>
 
-		Sentry.init({
-			dsn,
-			environment: getSentryEnvironment(),
-			release: getRelease(),
-			tracesSampleRate: 0,
-			...replaySampleRates,
-			sendDefaultPii: false,
-			skipBrowserExtensionCheck: true,
-			defaultIntegrations: false,
-			transport: makeContentScriptSentryTransport(Sentry),
-			integrations: [
-				Sentry.replayIntegration(getContentScriptReplayIntegrationOptions()),
-			],
-			beforeSend: createBeforeSend({ runtimeContext: 'content-script', sessionId }),
-			beforeSendReplay: createBeforeSendReplay({ runtimeContext: 'content-script', sessionId }),
-		});</pre></details></div><p class="source">3.4.1 · plugins/sentry/content-script.js · lines 17–39 · <a href="evidence.html#sentry-init">Numbered evidence</a></p><p>Performance trace sampling is zero and default content-script integrations are disabled. Text visible on the page has no global mask. Form inputs are masked and media is blocked. Request/response bodies are disabled for Replay network capture.</p></section><section id="identity"><h2>2. Is the replay anonymous or gated by consent?</h2><p><strong>Do not describe it as anonymous.</strong> Since 3.4.0, shared context can explicitly associate platform, action, task and platform-user identity with Sentry. On RaterHub that identity can be an email. Even the earlier version had session tags and potentially identifying visible text.</p><div class="code-block"><details><summary>View extension source code</summary><pre>function persist() {
-	chrome.storage?.session?.set({ [ACTIVITY_CONTEXT_KEY]: snapshot }).catch(() =&gt; {});
-}
+    <h2>1. What is Sentry?</h2>
+    <p>Sentry is a standard tool developers use to find errors and performance problems. In this extension, it sends diagnostic information about the RaterHub page to the Welo Sentry server. Its presence alone does not mean that the screen is being recorded.</p>
+    <p>For this audit, Sentry has three relevant functions:</p>
+    <ul style="color:#ccc;margin:0 0 24px 24px;">
+        <li>report errors;</li>
+        <li>measure how the page performs;</li>
+        <li>save a replay of the RaterHub page for some sessions.</li>
+    </ul>
 
-function applyToSdk() {
-	if (!sdk) return;
-	try {
-		const scope = sdk.getCurrentScope?.() ?? sdk;
-		if (typeof scope.setTag !== 'function') return;
-		for (const key of TAG_KEYS) {
-			if (snapshot[key]) scope.setTag(key, snapshot[key]);
-			else if (typeof scope.removeTag === 'function') scope.removeTag(key);
-		}
-		if (snapshot.platformUserId &amp;&amp; typeof sdk.setUser === 'function') {
-			sdk.setUser({ id: snapshot.platformUserId });
-		}
-	} catch {
-		/* tagging must not break replay */
-	}</pre></details></div><p class="source">3.4.1 · plugins/sentry/activity-context.js · lines 17–35 · <a href="evidence.html#sentry-identity">Numbered evidence</a></p><p>The content-script Sentry initialization shown above has no login/privacy-acceptance gate. The acceptance checks on the separate Factuality Assist GET are not a universal telemetry gate. New URL tags and Replay metadata use origin plus pathname, capped at 200 characters; the separate activity-event list of tab URLs does not receive that same treatment.</p></section><section id="limits"><h2>3. What does this not prove?</h2><p>No active RaterHub call enabling whole-screen recording or the library’s separate screenshot support was found. The optional image in the new Factuality request is extracted task content, not evidence of a screenshot of your monitor.</p><p>Masked input fields in Replay do not stop the separate Check My Answer POST from sending a comment. Static configuration also cannot establish whether your actual session was sampled, delivered, viewed or retained.</p></section><section id="sdk"><h2>4. Did Sentry itself change in 3.4.1?</h2><p><strong>Yes. SDK 10.74.0 → 10.75.0; Welo’s own settings stayed identical.</strong> Five dependency source modules changed: version, collection-option resolution, missing LCP entries, an XHR error-reference cleanup and Replay attribute synchronization. In an isolated test, both resolvers returned the same collection options for the extension’s <code>sendDefaultPii:false</code> setting with no <code>dataCollection</code> override.</p><p>There is no evidence here of increased sampling or newly enabled network-body capture. “Same settings” does not mean the entire SDK implementation is unchanged. <a href="evidence.html#sdk-versions">See the extracted version evidence.</a></p></section><footer class="method"><p>Extension ID: <code>oceohhnabfcnjfcpppaegdfecladagcc</code>. Scope: RaterHub and shared components that affect it. Static review and isolated tests of distributed client code; no real tasks submitted or production endpoints called. Server decisions, retention, training use and consequences for raters are not established by this audit.</p><p><a href="https://github.com/rhtoolkit/rhtoolkit-dev.github.io">Audit repository</a> · <a href="evidence.html#method">Method and provenance</a></p></footer></main></body></html>
+    <div class="tldr">
+        <p>Sentry is a standard software diagnostics tool. On RaterHub, it can save a replay of the RaterHub page for some sessions. It does not secretly film your whole screen, and the RaterHub integration does not enable the library's separate screenshot feature.</p>
+    </div>
+
+    <h2>2. What is active on RaterHub?</h2>
+    <p>For normal production sessions, about 10 out of 100 may receive a replay of the RaterHub page. Separately, when Sentry captures an error, the code is configured to keep the replay for that error case at a 100% sample rate. Neither setting records your monitor or other tabs.</p>
+    <p>Text that is visible on the RaterHub page may appear in the replay. Text typed into form fields is masked.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>View Extension Source Code</summary>
+            <pre>// content-script/index.js
+replaysSessionSampleRate: 0.1,
+replaysOnErrorSampleRate: 1.0,
+Sentry.replayIntegration({
+  maskAllText: false,
+  maskAllInputs: true,
+  blockAllMedia: false,
+});</pre>
+        </details>
+    </div>
+
+    <span class="verdict info">Verdict: RaterHub webpage replay is active</span>
+
+    <h2>3. Is the whole monitor recorded?</h2>
+    <p><strong>The active RaterHub code does not automatically record your whole screen.</strong> The 10% setting above only controls replay of the webpage.</p>
+    <p>The Sentry library also includes a standard support function for a user-requested screenshot. The RaterHub code does not turn this function on. Its presence in the library does not mean that a screenshot was taken.</p>
+
+    <div class="code-block">
+        <details>
+            <summary>Library support code (not enabled in RaterHub)</summary>
+            <pre>// Sentry feedback support code in the original bundle
+const stream = await mediaDevices.getDisplayMedia({
+  video: { width: innerWidth * scale, height: innerHeight * scale },
+  audio: false,
+  monitorTypeSurfaces: 'exclude',
+  preferCurrentTab: true,
+  selfBrowserSurface: 'include',
+  surfaceSwitching: 'exclude',
+});</pre>
+        </details>
+    </div>
+
+    <p class="source">If this standard support function were used, Chrome or Edge would normally ask what to share. No active RaterHub call to it was found.</p>
+
+    <span class="verdict safe">Verdict: No automatic whole-screen recording found</span>
+
+    <p class="source">Evidence: original installed bundle at <code>incoming_packages\welo_3.3.5_installed_2026-09-11\content-script\index.js</code>. This is a static code review; it proves configured capability, not whether a particular session was sampled or transmitted.</p>
+</main>
+</body>
+</html>
