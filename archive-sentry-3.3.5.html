@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welo Sentry Audit</title>
+    <style>
+        :root { --bg:#141414; --text:#e2e2e2; --muted:#888; --border:#2e2e2e; --accent:#fff; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:16px; line-height:1.6; }
+        .main-content { max-width:850px; margin:auto; padding:80px 40px; }
+        .page-title { color:var(--accent); font-size:26px; font-weight:600; margin-bottom:8px; }
+        .page-subtitle { color:var(--muted); margin-bottom:50px; }
+        h2 { color:var(--accent); font-size:18px; margin:50px 0 12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+        p { color:#ccc; margin-bottom:20px; }
+        code { background:#1f1f1f; border:1px solid var(--border); border-radius:4px; color:#eee; font:14px Consolas,Monaco,monospace; padding:3px 6px; }
+        .verdict { display:inline-block; padding:6px 12px; margin:14px 0 30px; border:1px solid var(--border); border-radius:4px; font-size:15px; font-weight:600; }
+        .safe { color:#6ee7b7; border-color:rgba(110,231,183,.3); background:rgba(110,231,183,.05); }
+        .info { color:#c4b5e3; border-color:rgba(196,181,227,.3); background:rgba(196,181,227,.05); }
+        .tldr { border-left:2px solid var(--muted); padding:4px 0 4px 24px; margin:20px 0 50px; }
+        .tldr p { margin:0; color:#e2e2e2; }
+        .code-block { border:1px solid var(--border); border-radius:6px; margin:20px 0; overflow:hidden; }
+        .code-block summary { background:#1a1a1a; color:var(--muted); cursor:pointer; padding:14px 20px; font-size:14px; }
+        .code-block summary:hover { color:#fff; }
+        pre { background:#0f0f0f; color:#bbb; font:13px/1.6 Consolas,Monaco,monospace; overflow-x:auto; padding:20px; white-space:pre-wrap; }
+        .source { color:#888; font-size:13px; margin:-8px 0 14px; }
+        a { color:#aaa; }
+        @media (max-width:620px) { .main-content { padding:40px 20px; } }
+    </style>
+</head>
+<body>
+<main class="main-content"><p style="border:1px solid #e57373;padding:16px"><strong>Historical 3.3.5 audit.</strong> Preserved wording may contain superseded or incomplete conclusions. <a href="index.html">Read the current 3.4.1 audit and corrections.</a></p>
+    <div class="page-title">Welo Sentry Audit (Version 3.3.5)</div>
+    <div class="page-subtitle">What Sentry does while you use RaterHub.</div>
+
+    <p><a href="archive-3.3.5.html">← Back to the main security audit</a></p>
+
+    <h2>1. What is Sentry?</h2>
+    <p>Sentry is a standard tool developers use to find errors and performance problems. In this extension, it sends diagnostic information about the RaterHub page to the Welo Sentry server. Its presence alone does not mean that the screen is being recorded.</p>
+    <p>For this audit, Sentry has three relevant functions:</p>
+    <ul style="color:#ccc;margin:0 0 24px 24px;">
+        <li>report errors;</li>
+        <li>measure how the page performs;</li>
+        <li>save a replay of the RaterHub page for some sessions.</li>
+    </ul>
+
+    <div class="tldr">
+        <p>Sentry is a standard software diagnostics tool. On RaterHub, it can save a replay of the RaterHub page for some sessions. It does not secretly film your whole screen, and the RaterHub integration does not enable the library's separate screenshot feature.</p>
+    </div>
+
+    <h2>2. What is active on RaterHub?</h2>
+    <p>For normal production sessions, about 10 out of 100 may receive a replay of the RaterHub page. Separately, when Sentry captures an error, the code is configured to keep the replay for that error case at a 100% sample rate. Neither setting records your monitor or other tabs.</p>
+    <p>Text that is visible on the RaterHub page may appear in the replay. Text typed into form fields is masked.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// content-script/index.js
+replaysSessionSampleRate: 0.1,
+replaysOnErrorSampleRate: 1.0,
+Sentry.replayIntegration({
+  maskAllText: false,
+  maskAllInputs: true,
+  blockAllMedia: false,
+});</pre></details></div>
+    <span class="verdict info">Verdict: RaterHub webpage replay is active</span>
+
+    <h2>3. Is the whole monitor recorded?</h2>
+    <p><strong>The active RaterHub code does not automatically record your whole screen.</strong> The 10% setting above only controls replay of the webpage.</p>
+    <p>The Sentry library also includes a standard support function for a user-requested screenshot. The RaterHub code does not turn this function on. Its presence in the library does not mean that a screenshot was taken.</p>
+    <div class="code-block"><details><summary>Library support code (not enabled in RaterHub)</summary><pre>// Sentry feedback support code in the original bundle
+const stream = await mediaDevices.getDisplayMedia({
+  video: { width: innerWidth * scale, height: innerHeight * scale },
+  audio: false,
+  monitorTypeSurfaces: 'exclude',
+  preferCurrentTab: true,
+  selfBrowserSurface: 'include',
+  surfaceSwitching: 'exclude',
+});</pre></details></div>
+    <p class="source">If this standard support function were used, Chrome or Edge would normally ask what to share. No active RaterHub call to it was found.</p>
+    <span class="verdict safe">Verdict: No automatic whole-screen recording found</span>
+
+    <p class="source">Evidence: original installed bundle at <code>incoming_packages\welo_3.3.5_installed_2026-09-11\content-script\index.js</code>. This is a static code review; it proves configured capability, not whether a particular session was sampled or transmitted.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welo Security Audit</title>
+    <style>
+        :root { --bg:#141414; --text:#e2e2e2; --muted:#888; --border:#2e2e2e; --accent:#fff; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; font-size:16px; line-height:1.6; }
+        .main-content { max-width:850px; margin:auto; padding:80px 40px; }
+        .page-title { color:var(--accent); font-size:26px; font-weight:600; margin-bottom:8px; }
+        .alternative { color:var(--muted); text-align:center; margin-bottom:50px; }
+        .alternative a { display:inline-block; color:#fff; border:1px solid var(--border); border-radius:4px; padding:7px 14px; text-decoration:none; }
+        .alternative a:hover { border-color:#888; }
+        .page-subtitle { color:var(--muted); margin-bottom:12px; }
+        h2 { color:var(--accent); font-size:18px; margin:50px 0 12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+        p { color:#ccc; margin-bottom:20px; }
+        code { background:#1f1f1f; border:1px solid var(--border); border-radius:4px; color:#eee; font:14px Consolas,Monaco,monospace; padding:3px 6px; }
+        .verdict { display:inline-block; padding:6px 12px; margin:14px 0 30px; border:1px solid var(--border); border-radius:4px; font-size:15px; font-weight:600; }
+        .safe { color:#6ee7b7; border-color:rgba(110,231,183,.3); background:rgba(110,231,183,.05); }
+        .danger { color:#ff8b8b; border-color:rgba(229,115,115,.3); background:rgba(229,115,115,.05); }
+        .info { color:#c4b5e3; border-color:rgba(196,181,227,.3); background:rgba(196,181,227,.05); }
+        .warning { border-left:2px solid #e57373; padding:4px 0 4px 24px; margin:24px 0; }
+        .warning p { margin:0; }
+        .code-block { border:1px solid var(--border); border-radius:6px; margin:20px 0; overflow:hidden; }
+        .code-block summary { background:#1a1a1a; color:var(--muted); cursor:pointer; padding:14px 20px; font-size:14px; }
+        .code-block summary:hover { color:#fff; }
+        pre { background:#0f0f0f; color:#bbb; font:13px/1.6 Consolas,Monaco,monospace; overflow-x:auto; padding:20px; white-space:pre-wrap; }
+        .source { color:#888; font-size:13px; margin:-8px 0 14px; }
+        a { color:#aaa; }
+        @media (max-width:620px) { .main-content { padding:40px 20px; } }
+    </style>
+</head>
+<body>
+<main class="main-content"><p style="border:1px solid #e57373;padding:16px"><strong>Historical 3.3.5 audit.</strong> Preserved wording may contain superseded or incomplete conclusions. <a href="index.html">Read the current 3.4.1 audit and corrections.</a></p>
+    <div class="page-title">Welo Data Assistant Audit (Version 3.3.5)</div>
+    <div class="page-subtitle">Review based only on the locally installed extension files.</div>
+    <div class="alternative"><a href="https://chromewebstore.google.com/detail/mkmcaahblopncpffokbonkbjlhfjpoha?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer">View RHTS</a></div>
+    <div class="warning"><p><strong>Version note:</strong> Version 3.3.5 has the some features enabled again, including activity tracking and webpage diagnostics. This audit describes only the installed 3.3.5 files; a future update may change what is active.</p></div>
+
+    <h2>1. Can Welo see my other browser tabs?</h2>
+    <p><strong>Yes. It can collect the URLs of open tabs when an activity event is sent.</strong> It does not, in the inspected RaterHub path, read the page contents of unrelated tabs.</p>
+    <p>It also counts new tabs opened while an activity event is active.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// event-manager/event-class.js, lines 136-137
+const tabs = await chrome.tabs.query({});
+allUrls = tabs.map(item =&gt; item.url).filter(Boolean);
+
+// event-manager/event-class.js, line 189
+tabs: allUrls,
+
+// event-manager/index.js, lines 954-956
+chrome.tabs.onCreated.addListener((tab) =&gt; {
+  eventManager.manageEvent({ action: "botCapabilities", type: "tabOpened" });
+});</pre></details></div>
+    <div class="warning"><p><strong>Practical advice:</strong> Use a separate browser profile / separate browser for work. This keeps personal URLs outside the group of tabs that the extension can query.</p></div>
+    <span class="verdict danger">Verdict: Other-tab URLs can be reported</span>
+
+    <h2>2. Can it record my whole screen?</h2>
+    <p><strong>No.</strong> Sentry is used for errors, performance and replay of the RaterHub webpage. It does not automatically record your monitor or other tabs.</p>
+    <p>Normal webpage replay is sampled at 10%. If Sentry captures an error, the separate error-replay setting is 100%. Visible page text may appear in a replay; form inputs are masked.</p>
+    <p>The package contains standard screenshot support, but the active RaterHub flow does not turn it on.</p>
+    <p><a href="archive-sentry-3.3.5.html">Open the dedicated Sentry audit for version 3.3.5 →</a></p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// content-script/index.js, lines 83-98
+// Active Sentry configuration
+tracesSampleRate: 1.0,
+replaysSessionSampleRate: 0.1,
+replaysOnErrorSampleRate: 1.0,
+sendDefaultPii: false,
+Sentry.replayIntegration({
+  maskAllText: false,
+  maskAllInputs: true,
+  blockAllMedia: false,
+});</pre></details></div>
+    <span class="verdict info">Verdict: No automatic screen recording; RaterHub webpage replay is active</span>
+
+    <h2>3. Does it track my mouse or keyboard?</h2>
+    <p><strong>No general mouse-movement, cursor-coordinate, scrolling-speed or keystroke tracker was found.</strong> RaterHub copy/paste prevention is disabled.</p>
+    <p>There is one narrow mouse listener for the Cancel and Release controls. It sends an internal event; it does not click the control automatically.</p>
+    <p>Sentry Replay may include page interactions in a selected replay, but that is not a continuous mouse or keyboard recorder.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// utils/platform-flags.js, lines 10-12
+export const COPY_PASTE_PREVENTION = {
+  [Platform.RATERHUB]: false,
+};
+
+// background/scripts/raterhub/task-button-script.js, lines 31-45
+document.addEventListener('mousedown', (event) =&gt; {
+  if (event.target.closest('#ewok-task-cancel-button')) {
+    notify('cancelled');
+    return;
+  }
+  if (isReleaseTarget(event.target)) {
+    notify('released');
+  }
+}, true);</pre></details></div>
+    <span class="verdict safe">Verdict: No general mouse or keyboard tracking found</span>
+
+    <h2>4. Can it list my other installed extensions?</h2>
+    <p><strong>No direct list was found.</strong> The manifest does not request Chrome's <code>management</code> permission, which is normally required to obtain the names, IDs or versions of installed extensions.</p>
+    <p>The source contains a fallback collector for this information. In the installed package, the API is unavailable because the manifest has no <code>management</code> permission, so the collector returns empty values.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// background/device-fingerprint.js, lines 137-141
+const result = {
+  installed_extensions: null,
+  extensions_count: null,
+  extensions_hash: null,
+};
+if (!chrome.management?.getAll) return result;
+const all = await chrome.management.getAll();</pre></details></div>
+    <div class="code-block"><details><summary>View manifest.json permissions</summary><pre>// manifest.json, line 36
+"permissions": [
+  "activeTab", "storage", "tabs", "webRequest", "scripting",
+  "alarms", "cookies", "idle", "webNavigation", "offscreen"
+]
+// There is no "management" permission.</pre></details></div>
+    <p class="source">manifest.json, line 36: permissions include <code>tabs</code> and <code>webRequest</code>, but not <code>management</code>.</p>
+    <p>That is different from seeing an effect inside RaterHub. If another extension adds a visible button or changes the page DOM, Welo may see the page element or its effect, but it does not learn which extension created it.</p>
+    <span class="verdict safe">Verdict: Other-extension listing is unavailable under the current manifest</span>
+
+    <h2>5. Can it identify an auto-submit or workflow helper?</h2>
+    <p><strong>Welo can see that RaterHub completed a task, but it does not identify which tool or extension caused the action.</strong></p>
+    <p>It watches successful RaterHub completion requests such as <code>/preview</code> or <code>/commit</code>. The event does not contain an <code>autoSubmit</code> flag, another extension's ID, click coordinates or a general mouse trace.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// background/scripts/raterhub/raterhub-script.js, lines 220-239
+this.commitListener = (details) =&gt; {
+  if (details.method !== 'POST' || details.statusCode !== 200) return;
+  // ...
+  await this.emitTerminalEvent('fulfill', context.tabId ?? details.tabId);
+};
+
+chrome.webRequest.onCompleted.addListener(this.commitListener, {
+  urls: raterhubWebRequestUrls(RATERHUB_COMMIT_TASK_PATH + '*'),
+});</pre></details></div>
+    <div class="code-block"><details><summary>View monitored RaterHub endpoints</summary><pre>// raterhub-script.js
+chrome.webRequest.onCompleted.addListener(this.fulfillListener, {
+  urls: raterhubWebRequestUrls(`${RATERHUB_PREVIEW_TASK_PATH}*`),
+});
+
+chrome.webRequest.onCompleted.addListener(this.commitListener, {
+  urls: raterhubWebRequestUrls(`${RATERHUB_COMMIT_TASK_PATH}*`),
+});</pre></details></div>
+    <p class="source">This describes what Welo records. It does not decide whether automation is allowed by RaterHub or by the task provider.</p>
+    <span class="verdict info">Verdict: Completion may be observed; helper identity is not identified</span>
+
+    <h2>6. What changed from version 3.3.3?</h2>
+    <p>The important change is that the RaterHub platform is now enabled. Copy/paste prevention remains disabled, and the Welo dashboard remains disabled.</p>
+    <div class="code-block"><details><summary>View Extension Source Code</summary><pre>// utils/platform-flags.js, version 3.3.5
+[Platform.RATERHUB]: true,
+
+// Copy/paste prevention remains disabled
+[Platform.RATERHUB]: false,</pre></details></div>
+    <span class="verdict info">Main change: RaterHub-specific code is enabled again</span>
+
+    <h2>7. Does it collect location or device information?</h2>
+    <p><strong>Yes, in a limited way.</strong> When you are logged in, the extension can contact <code>ipwho.is</code> to receive the ISP, country and region linked to your public IP.</p>
+    <p>This means <code>ipwho.is</code> can see the public IP used for that request. The check can run in the background after login, even before a task is submitted. The inspected RaterHub activity event does not include the IP lookup fields. This check is separate from Sentry and tab URLs.</p>
+    <p>The extension also creates a random device token and stores it locally.</p>
+    <div class="code-block"><details><summary>View the relevant source code</summary><pre>// background.js, lines 46-51
+if (!isUserLoggedIn) return;
+warmUpDeviceFingerprint().catch(() =&gt; {});
+
+// background/device-fingerprint.js
+const DEVICE_TOKEN_KEY = 'wda_device_token';
+const FINGERPRINT_IP_GEO_URL = 'https://ipwho.is/';
+
+const response = await fetch(FINGERPRINT_IP_GEO_URL, {
+  method: 'GET',
+  cache: 'no-store',
+});
+const data = await response.json();
+
+return {
+  device_ip_isp: data.connection?.isp || data.org || null,
+  device_ip_country: data.country_code || data.country || null,
+  device_ip_region: data.region || data.regionName || null,
+};</pre></details></div>
+    <span class="verdict info">Verdict: IP lookup and local device token are present; IP fields are not in the RaterHub activity payload</span>
+
+</main>
+</body>
+</html>
